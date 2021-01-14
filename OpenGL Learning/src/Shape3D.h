@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <iostream>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -36,6 +37,47 @@ public:
 
 		m_ObjectVAO->AddBuffer(*m_VertexBuffer, layout);
 		m_IndexBuffer = std::make_unique<IndexBuffer>(indices.data(), indices.size());
+	}
+
+	static std::shared_ptr<Shape3D> CreatePlane(GLuint dimensions)
+	{
+		std::vector<float> vertices;
+		std::vector<unsigned int> indices;
+
+		GLuint half = dimensions/2;
+
+		float size = 1.f / dimensions;
+		float halfSize = half * size;
+
+		unsigned int index = 0;
+		for (int i = 0; i < dimensions; i++)
+		{
+			for (int j = 0; j < dimensions; j++)
+			{
+				vertices.push_back(i * size - halfSize);
+				vertices.push_back(j * size - halfSize);
+				vertices.push_back(0);	
+			}
+		}
+
+		for (int row = 0; row < dimensions - 1; row++)
+		{
+			for (int col = 0; col < dimensions - 1; col++)
+			{
+				indices.push_back(dimensions * row + col);
+				indices.push_back(dimensions * row + col + dimensions);
+				indices.push_back(dimensions * row + col + dimensions + 1);
+
+				indices.push_back(dimensions * row + col);
+				indices.push_back(dimensions * row + col + dimensions + 1);
+				indices.push_back(dimensions * row + col + 1);
+			}
+		}
+
+		VertexBufferLayout layout;
+		layout.Push<float>(3);
+
+		return std::make_shared<Shape3D>(vertices, indices, layout);
 	}
 	static std::shared_ptr<Shape3D> CreateOneSheetHyperboloid(float twist)
 	{

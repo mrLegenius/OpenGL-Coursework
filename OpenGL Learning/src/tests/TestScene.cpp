@@ -11,13 +11,13 @@ namespace test
 {
 	test::TestScene::TestScene()
 	{
-		m_Camera = std::make_unique<Camera>(glm::vec3(0, 0.0f, 10.0f));
+		m_Camera = std::make_unique<Camera>(glm::vec3(0, 0.0f, 5.0f));
 		GLCall(glEnable(GL_DEPTH_TEST));
 		GLCall(glEnable(GL_BLEND));
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 		m_ObjectShader = std::make_unique<Shader>("res/shaders/Unlit_Color.shader");
 
-		m_Object = Shape3D::CreateCube();
+		m_Object = Shape3D::CreatePlane(10);
 	}
 
 	test::TestScene::~TestScene()
@@ -42,6 +42,7 @@ namespace test
 			return;
 
 		float velocity = 1.0f * deltaTime;
+
 		if (input.IsKeyDown(GLFW_KEY_A))
 			m_Camera->Move(Camera_Movement::LEFT, velocity);
 
@@ -72,7 +73,7 @@ namespace test
 
 	void test::TestScene::OnRender()
 	{
-		GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+		GLCall(glClearColor(0.06f, 0.02f, 0.13f, 1.0f));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
 		auto& settings = Settings::GetInstance();
@@ -84,17 +85,16 @@ namespace test
 		m_View = m_Camera->GetViewMatrix();
 		Renderer renderer;
 
-
 		//TestObject
 		{
 			auto& shader = *m_ObjectShader;
-			glm::vec4 color = glm::vec4(0.2f, 0.25f, 0.5f, 1.f);
+			glm::vec4 color = glm::vec4(0.8f, 0.25f, 0.25f, 1.f);
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 			glm::mat4 mvp = m_Proj * m_View * model;
 			shader.Bind();
 			shader.SetUniformMat4f("u_MVP", mvp);
 			shader.SetUniformVec4f("u_Color", color);
-			renderer.DrawElementTriangleStrip(shader, m_Object->getObjectVAO(), m_Object->getIndexBuffer());
+			renderer.DrawElementTriangles(shader, m_Object->getObjectVAO(), m_Object->getIndexBuffer());
 		}
 	}
 
