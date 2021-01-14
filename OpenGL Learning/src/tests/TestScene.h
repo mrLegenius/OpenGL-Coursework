@@ -30,8 +30,15 @@ namespace test
 
 		std::unique_ptr<Camera> m_Camera;
 		std::shared_ptr<Shape3D> m_Object;
+		std::shared_ptr<Shape3D> m_LightSource;
+
+		glm::vec3 m_LightPos;
 
 		std::unique_ptr<Shader> m_ObjectShader;
+		std::unique_ptr<Shader> m_LightSourceShader;
+		std::unique_ptr<Texture> m_DiffuseTexture;
+		std::unique_ptr<Texture> m_SpecularTexture;
+		std::unique_ptr<Texture> m_EmissionTexture;
 
 		glm::mat4 m_Proj, m_View;
 	};

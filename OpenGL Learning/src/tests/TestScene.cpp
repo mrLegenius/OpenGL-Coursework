@@ -6,18 +6,35 @@
 
 #include "Renderer.h"
 #include "Input.h"
+#include "Materials.h"
 
 namespace test 
 {
-	test::TestScene::TestScene()
+	test::TestScene::TestScene() : m_LightPos(glm::vec3(0, 1, 0))
 	{
 		m_Camera = std::make_unique<Camera>(glm::vec3(0, 0.0f, 5.0f));
 		GLCall(glEnable(GL_DEPTH_TEST));
 		GLCall(glEnable(GL_BLEND));
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-		m_ObjectShader = std::make_unique<Shader>("res/shaders/Unlit_Color.shader");
+		m_ObjectShader = std::make_unique<Shader>("res/shaders/Lit.shader", 1);
+		m_LightSourceShader = std::make_unique<Shader>("res/shaders/Unlit_Color.shader");
 
-		m_Object = Shape3D::CreatePlane(10);
+		m_Object = Shape3D::CreatePlane(100);
+		m_LightSource = Shape3D::CreateSphere(90);
+
+		m_DiffuseTexture = std::make_unique<Texture>("res/textures/container2_specular.png");
+
+		m_SpecularTexture = std::make_unique<Texture>("res/textures/container2_specular.png");
+		m_EmissionTexture = std::make_unique<Texture>("res/textures/container2_emission.png");
+
+		m_ObjectShader->Bind();
+		m_ObjectShader->SetUniform1i("u_Material.useDiffuseMap", 1);
+		m_ObjectShader->SetUniform1i("u_Material.useSpecularMap", 1);
+		m_ObjectShader->SetUniform1i("u_Material.useEmissionMap", 1);
+
+		m_ObjectShader->SetUniform1i("u_Material.diffuseMap", 0);
+		m_ObjectShader->SetUniform1i("u_Material.specularMap", 1);
+		m_ObjectShader->SetUniform1i("u_Material.emissionMap", 2);
 	}
 
 	test::TestScene::~TestScene()
@@ -85,16 +102,63 @@ namespace test
 		m_View = m_Camera->GetViewMatrix();
 		Renderer renderer;
 
+		m_DiffuseTexture->Bind();
+		m_SpecularTexture->Bind(1);
+		m_EmissionTexture->Bind(2);
+
 		//TestObject
 		{
+			auto& object = *m_Object;
 			auto& shader = *m_ObjectShader;
 			glm::vec4 color = glm::vec4(0.8f, 0.25f, 0.25f, 1.f);
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+			model = glm::rotate(model, 3.14f/2, glm::vec3(1.f, 0.f, 0.f));
+			model = glm::scale(model, glm::vec3(10.f, 10.f, 1.f));
+			shader.Bind();
+
+			Materials::SetEmerald(shader);
+			
+			//shader.SetUniform1f("iTime", glfwGetTime());
+
+			std::string light = "u_PointLights[0]";
+			shader.SetUniform1i("u_PointLightsCount", 1);
+
+			shader.SetUniformVec3f(light + ".position", m_LightPos);
+			shader.SetUniformVec3f(light + ".ambient", glm::vec3(0.5f, 0.5f, 0.5f));
+			shader.SetUniformVec3f(light + ".diffuse", glm::vec3(0.3f, 0.3f, 0.3f));
+			shader.SetUniformVec3f(light + ".specular", glm::vec3(0.3f, 0.3f, 0.3f));
+			shader.SetUniform1f(light + ".constant", 1.0f);
+			shader.SetUniform1f(light + ".linear", 0.09f);
+			shader.SetUniform1f(light + ".quadratic", 0.032f);
+
+			shader.SetUniform3f("u_DirLight.direction", -0.2f, -1.0f, -0.3f);
+			shader.SetUniform3f("u_DirLight.ambient", 0.1f, 0.1f, 0.1f);
+			shader.SetUniform3f("u_DirLight.diffuse", 0.1f, 0.1f, 0.1f);
+			shader.SetUniform3f("u_DirLight.specular", 0.2f, 0.2f, 0.2f);
+
+			shader.SetUniformMat4f("u_Model", model);
+			shader.SetUniformMat4f("u_View", m_View);
+			shader.SetUniformMat4f("u_Projection", m_Proj);
+
+			shader.SetUniformVec3f("u_ViewPos", m_Camera->Position);
+
+			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
+		}
+
+		//Light Source
+		{
+			auto& object = m_LightSource;
+			auto& shader = *m_LightSourceShader;
+			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), m_LightPos);
+			model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 			glm::mat4 mvp = m_Proj * m_View * model;
 			shader.Bind();
-			shader.SetUniformMat4f("u_MVP", mvp);
+			shader.SetUniformMat4f("u_Model", model);
+			shader.SetUniformMat4f("u_View", m_View);
+			shader.SetUniformMat4f("u_Projection", m_Proj);
 			shader.SetUniformVec4f("u_Color", color);
-			renderer.DrawElementTriangles(shader, m_Object->getObjectVAO(), m_Object->getIndexBuffer());
+			renderer.DrawElementTriangles(shader, object->getObjectVAO(), object->getIndexBuffer());
 		}
 	}
 

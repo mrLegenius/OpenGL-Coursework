@@ -56,7 +56,14 @@ public:
 			{
 				vertices.push_back(i * size - halfSize);
 				vertices.push_back(j * size - halfSize);
-				vertices.push_back(0);	
+				vertices.push_back(0);
+
+				vertices.push_back(0);
+				vertices.push_back(0);
+				vertices.push_back(1);
+
+				vertices.push_back(i * size);
+				vertices.push_back(j * size);
 			}
 		}
 
@@ -76,6 +83,8 @@ public:
 
 		VertexBufferLayout layout;
 		layout.Push<float>(3);
+		layout.Push<float>(3);
+		layout.Push<float>(2);
 
 		return std::make_shared<Shape3D>(vertices, indices, layout);
 	}

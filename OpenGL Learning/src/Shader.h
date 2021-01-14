@@ -16,7 +16,7 @@ private:
 	unsigned int m_RendererID = 0;
 	std::unordered_map<std::string, int> m_UniformLocationCache;
 public:
-	Shader(const std::string& filepath, const int pointLightsCount = 0, const int spotLightsCount = 0);
+	Shader(const std::string& filepath, const int pointLightsCount = 99, const int spotLightsCount = 99);
 	~Shader();
 
 	void Bind() const;
