@@ -72,6 +72,15 @@
     <ClCompile Include="src\tests\TestScene.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="src\LandscapeGenerator.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TextureGenerator.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PerlinNoiseGenerator.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\vendor\glm\detail\func_common.inl">
@@ -482,15 +491,10 @@
     <None Include="src\vendor\glm\gtx\wrap.inl">
       <Filter>Файлы заголовков</Filter>
     </None>
-    <None Include="res\shaders\Light.shader" />
-    <None Include="res\shaders\LightSource.shader" />
-    <None Include="res\shaders\Light with Maps.shader" />
-    <None Include="res\shaders\MultipleLights.shader" />
-    <None Include="res\shaders\2LightsTextured.shader" />
     <None Include="res\shaders\Unlit_Color.shader" />
     <None Include="res\shaders\Unlit_Texture.shader" />
-    <None Include="res\shaders\Unlit_Landscape.shader" />
     <None Include="res\shaders\Lit.shader" />
+    <None Include="res\shaders\Lit_Water.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h">
@@ -1409,6 +1413,15 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="src\tests\TestScene.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LandscapeGenerator.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TextureGenerator.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PerlinNoiseGenerator.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

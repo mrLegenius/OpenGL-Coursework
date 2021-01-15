@@ -50,9 +50,9 @@ public:
 		float halfSize = half * size;
 
 		unsigned int index = 0;
-		for (int i = 0; i < dimensions; i++)
+		for (GLuint i = 0; i < dimensions; i++)
 		{
-			for (int j = 0; j < dimensions; j++)
+			for (GLuint j = 0; j < dimensions; j++)
 			{
 				vertices.push_back(i * size - halfSize);
 				vertices.push_back(j * size - halfSize);
@@ -67,9 +67,9 @@ public:
 			}
 		}
 
-		for (int row = 0; row < dimensions - 1; row++)
+		for (GLuint row = 0; row < dimensions - 1; row++)
 		{
-			for (int col = 0; col < dimensions - 1; col++)
+			for (GLuint col = 0; col < dimensions - 1; col++)
 			{
 				indices.push_back(dimensions * row + col);
 				indices.push_back(dimensions * row + col + dimensions);

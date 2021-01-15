@@ -11,6 +11,7 @@ private:
 	int m_Width = 0, m_Height = 0, m_BPP = 0;
 public:
 	Texture(const std::string& path);
+	Texture(GLfloat data[], int width, int height);
 	Texture();
 	~Texture();
 

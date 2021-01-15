@@ -125,6 +125,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\PerlinNoiseGenerator.cpp" />
+    <ClCompile Include="src\LandscapeGenerator.cpp" />
     <ClCompile Include="src\Shape3D.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Application.cpp" />
@@ -144,17 +146,13 @@
     <ClCompile Include="src\vendor\stb_image\stb_image.cpp" />
     <ClCompile Include="src\VertexArray.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
+    <ClCompile Include="src\TextureGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\Lit.shader" />
-    <None Include="res\shaders\2LightsTextured.shader" />
-    <None Include="res\shaders\Unlit_Landscape.shader" />
+    <None Include="res\shaders\Lit_Water.shader" />
     <None Include="res\shaders\Unlit_Texture.shader" />
     <None Include="res\shaders\Unlit_Color.shader" />
-    <None Include="res\shaders\Light with Maps.shader" />
-    <None Include="res\shaders\Light.shader" />
-    <None Include="res\shaders\LightSource.shader" />
-    <None Include="res\shaders\MultipleLights.shader" />
+    <None Include="res\shaders\Lit.shader" />
     <None Include="src\vendor\glm\detail\func_common.inl" />
     <None Include="src\vendor\glm\detail\func_common_simd.inl" />
     <None Include="src\vendor\glm\detail\func_exponential.inl" />
@@ -293,6 +291,8 @@
     <None Include="src\vendor\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\PerlinNoiseGenerator.h" />
+    <ClInclude Include="src\LandscapeGenerator.h" />
     <ClInclude Include="src\Shape3D.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Input.h" />
@@ -599,6 +599,7 @@
     <ClInclude Include="src\VertexArray.h" />
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
+    <ClInclude Include="src\TextureGenerator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

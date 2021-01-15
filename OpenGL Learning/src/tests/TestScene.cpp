@@ -8,6 +8,9 @@
 #include "Input.h"
 #include "Materials.h"
 
+#include "LandscapeGenerator.h"
+#include "TextureGenerator.h"
+
 namespace test 
 {
 	test::TestScene::TestScene() : m_LightPos(glm::vec3(0, 1, 0))
@@ -19,22 +22,29 @@ namespace test
 		m_ObjectShader = std::make_unique<Shader>("res/shaders/Lit.shader", 1);
 		m_LightSourceShader = std::make_unique<Shader>("res/shaders/Unlit_Color.shader");
 
-		m_Object = Shape3D::CreatePlane(100);
+		m_Object = Shape3D::CreateSphere(90);//LandscapeGenerator::Generate(quality, amplitude, frequency);
 		m_LightSource = Shape3D::CreateSphere(90);
 
-		m_DiffuseTexture = std::make_unique<Texture>("res/textures/container2_specular.png");
+		//m_DiffuseTexture = LandscapeGenerator::GenerateHeightMap(glm::vec2(256, 256), 100, glm::vec2(10, 10));
 
 		m_SpecularTexture = std::make_unique<Texture>("res/textures/container2_specular.png");
-		m_EmissionTexture = std::make_unique<Texture>("res/textures/container2_emission.png");
+		m_EmissionTexture = std::make_unique<Texture>("res/textures/container2_emission.jpg");
 
 		m_ObjectShader->Bind();
 		m_ObjectShader->SetUniform1i("u_Material.useDiffuseMap", 1);
 		m_ObjectShader->SetUniform1i("u_Material.useSpecularMap", 1);
-		m_ObjectShader->SetUniform1i("u_Material.useEmissionMap", 1);
+		m_ObjectShader->SetUniform1i("u_Material.useEmissionMap", 0);
 
 		m_ObjectShader->SetUniform1i("u_Material.diffuseMap", 0);
 		m_ObjectShader->SetUniform1i("u_Material.specularMap", 1);
 		m_ObjectShader->SetUniform1i("u_Material.emissionMap", 2);
+
+		m_TestObject = Shape3D::CreatePlane(100);
+		m_TestTexture = std::make_unique<Texture>();
+		m_TestShader = std::make_unique<Shader>("res/shaders/Unlit_Texture.shader");
+
+		m_TestShader->Bind();
+		m_TestShader->SetUniform1i("u_Texture", 0);
 	}
 
 	test::TestScene::~TestScene()
@@ -58,13 +68,25 @@ namespace test
 		if (cameraLock)
 			return;
 
-		float velocity = 1.0f * deltaTime;
+		float velocity = 5.0f * deltaTime;
 
 		if (input.IsKeyDown(GLFW_KEY_A))
 			m_Camera->Move(Camera_Movement::LEFT, velocity);
 
 		if (input.IsKeyDown(GLFW_KEY_D))
 			m_Camera->Move(Camera_Movement::RIGHT, velocity);
+
+		if (input.IsKeyDown(GLFW_KEY_UP))
+			m_Camera->Pitch++;
+
+		if (input.IsKeyDown(GLFW_KEY_DOWN))
+			m_Camera->Pitch--;
+
+		if (input.IsKeyDown(GLFW_KEY_RIGHT))
+			m_Camera->Yaw++;
+
+		if (input.IsKeyDown(GLFW_KEY_LEFT))
+			m_Camera->Yaw--;
 
 		if (input.IsKeyDown(GLFW_KEY_W))
 			m_Camera->Move(Camera_Movement::FORWARD, velocity);
@@ -97,23 +119,23 @@ namespace test
 
 		const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
 
-		m_Proj = glm::perspective(glm::radians(m_Camera->Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100.0f);
+		m_Proj = glm::perspective(glm::radians(m_Camera->Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
 
 		m_View = m_Camera->GetViewMatrix();
 		Renderer renderer;
 
-		m_DiffuseTexture->Bind();
+		//m_DiffuseTexture->Bind();
 		m_SpecularTexture->Bind(1);
 		m_EmissionTexture->Bind(2);
-
-		//TestObject
+		/*
+		//Landscape
 		{
 			auto& object = *m_Object;
 			auto& shader = *m_ObjectShader;
 			glm::vec4 color = glm::vec4(0.8f, 0.25f, 0.25f, 1.f);
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 			model = glm::rotate(model, 3.14f/2, glm::vec3(1.f, 0.f, 0.f));
-			model = glm::scale(model, glm::vec3(10.f, 10.f, 1.f));
+			model = glm::scale(model, glm::vec3(100.f, 100.f, 1.f));
 			shader.Bind();
 
 			Materials::SetEmerald(shader);
@@ -144,7 +166,7 @@ namespace test
 
 			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 		}
-
+		*/
 		//Light Source
 		{
 			auto& object = m_LightSource;
@@ -159,6 +181,21 @@ namespace test
 			shader.SetUniformMat4f("u_Projection", m_Proj);
 			shader.SetUniformVec4f("u_Color", color);
 			renderer.DrawElementTriangles(shader, object->getObjectVAO(), object->getIndexBuffer());
+		}
+		m_TestTexture->Bind();
+		//Test
+		{
+			auto& object = *m_TestObject;
+			auto& shader = *m_TestShader;
+			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(1, 1, 1));
+			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+			glm::mat4 mvp = m_Proj * m_View * model;
+			shader.Bind();
+			shader.SetUniformMat4f("u_Model", model);
+			shader.SetUniformMat4f("u_View", m_View);
+			shader.SetUniformMat4f("u_Projection", m_Proj);
+			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 		}
 	}
 
@@ -181,6 +218,24 @@ namespace test
 		ImGui::Text("C - Lock/Unclock Camera");
 		ImGui::Text("K - Polygon Mode");
 		ImGui::Text("---------------");
+
+		ImGui::InputFloat("Amplitude", &amplitude, 1, 10, 3);
+		ImGui::InputInt("Octaves", &octaves, 1, 10);
+		ImGui::InputFloat("Quality", &quality, 32, 256, 3);
+		ImGui::InputFloat("Persistence", &persistence, 0.05f, 0.1f, 2);
+		ImGui::InputFloat2("Offset", &offset.x, 1);
+		if (ImGui::Button("Generate Seed"))
+			seed = rand() * rand();
+
+		std::string str_seed = "Seed = " + std::to_string(seed);
+		ImGui::Text(str_seed.data());
+			
+		if (ImGui::Button("Generate"))
+		{
+			srand(seed);
+			m_TestTexture = TextureGenerator::GenerateHeightMap(glm::vec2(quality), octaves, persistence, amplitude, offset);
+			//m_Object = LandscapeGenerator::Generate(quality, amplitude, frequency);
+		}
 	}
 	
 }
