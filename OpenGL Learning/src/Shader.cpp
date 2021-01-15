@@ -12,6 +12,8 @@ Shader::Shader(const std::string& filepath, const int pointLightsCount, const in
 {
 	auto source = ParseShader(filepath, pointLightsCount, spotLightsCount);
 	m_RendererID = CreateShader(source.VertexSource, source.FragmentSource);
+
+	std::cout << "Created shader(" << m_RendererID << ") in " << filepath << std::endl;
 }
 
 Shader::~Shader()
@@ -43,13 +45,12 @@ ShaderProgramSource Shader::ParseShader(const std::string& filePath, const int p
 			else if (line.find("fragment") != std::string::npos)
 			{
 				type = ShaderType::FRAGMENT;
-				
 			}
 		}
 		else
 		{
-			ss[(int)type] << line << "\n";
-			if (line.find("#version"))
+			ss[(int)type] << line.c_str() << "\n";
+			if (line.find("#version") != std::string::npos)
 			{
 				ss[(int)type] << "#define POINT_LIGHTS_NUM " << std::to_string(pointLightsCount) << "\n";
 				ss[(int)type] << "#define SPOT_LIGHTS_NUM " << std::to_string(spotLightsCount) << "\n";
@@ -73,7 +74,7 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
 	{
 		int length;
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-		char* message = (char*)alloca(length * sizeof(char));
+		char* message = (char*)_malloca(length * sizeof(char));
 		glGetShaderInfoLog(id, length, &length, message);
 		std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << std::endl;
 		std::cout << message << std::endl;
@@ -156,19 +157,20 @@ void Shader::SetUniformMat3f(const std::string& name, const glm::mat3& matrix)
 {
 	GLCall(glUniformMatrix3fv(GetUniformLocation(name), 1, GL_FALSE, &matrix[0][0]));
 }
-void Shader::SetUniformMat4f(const std::string & name, const glm::mat4 & matrix)
+void Shader::SetUniformMat4f(const std::string& name, const glm::mat4 & matrix)
 {
 	GLCall(glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, &matrix[0][0]));
 }
 
-int Shader::GetUniformLocation(const std::string & name)
+int Shader::GetUniformLocation(const std::string& name)
 {
 	if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
 		return m_UniformLocationCache[name];
 
-	GLCall(int location = glGetUniformLocation(m_RendererID, name.c_str()));
+	GLCall(GLint location = glGetUniformLocation(m_RendererID, name.c_str()));
+
 	if (location == -1)
-		std::cout << "Warning: uniform '" << name << "' doesn't exist!" << std::endl;
+		std::cout << "Warning: " << "In Shader(" << m_RendererID << ") uniform '" << name << "' doesn't exist!" << std::endl;
 	
 	m_UniformLocationCache[name] = location;
 	return location;

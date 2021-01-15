@@ -88,88 +88,6 @@ public:
 
 		return std::make_shared<Shape3D>(vertices, indices, layout);
 	}
-	static std::shared_ptr<Shape3D> CreateOneSheetHyperboloid(float twist)
-	{
-		float minU = -1, maxU = 1;
-		constexpr float minV = 0, maxV = 2 * glm::pi<float>();
-		std::vector<float> vertices;
-		std::vector<unsigned int> indices;
-
-		unsigned int i = 0;
-		for (float v = minV; v < maxV; v += 0.1f)
-		{
-			vertices.push_back(glm::cos(v));
-			vertices.push_back(glm::sin(v));
-			vertices.push_back(-0.5f);
-			indices.push_back(i++);
-
-			vertices.push_back(glm::cos(v + twist));
-			vertices.push_back(glm::sin(v + twist));
-			vertices.push_back(0.5f);
-			indices.push_back(i++);
-		}
-		indices.push_back(0);
-		indices.push_back(1);
-		
-		VertexBufferLayout layout;
-		layout.Push<float>(3);
-
-		return std::make_shared<Shape3D>(vertices, indices, layout);
-	}
-
-	static std::shared_ptr<Shape3D> CreateTwoSheetHyperboloid()
-	{
-		float minU = 0, maxU = 1;
-		constexpr float minV = 0, maxV = 2 * glm::pi<float>();
-		std::vector<float> vertices;
-		std::vector<unsigned int> indices;
-
-		unsigned int i = 0;
-		constexpr float t = glm::pi<float>() / 2 * 3;
-
-		for (float v = minV; v <= maxV; v += 0.01f)
-		{
-			for (float u = minU; u < maxU; u += 0.01f)
-			{
-				vertices.push_back(glm::sinh(u) * glm::cos(v));
-				vertices.push_back(glm::sinh(u) * glm::sin(v));
-				vertices.push_back(glm::cosh(u));
-
-
-				indices.push_back(i++);
-
-				vertices.push_back(glm::sinh(u) * glm::cos(v + 0.01f));
-				vertices.push_back(glm::sinh(u) * glm::sin(v + 0.01f));
-				vertices.push_back(glm::cosh(u));
-
-				indices.push_back(i++);
-				//indices.push_back(i + 1);
-			}
-			for (float u = maxU; u >= minU; u -= 0.01f)
-			{
-				vertices.push_back(glm::sinh(u) * glm::cos(v));
-				vertices.push_back(glm::sinh(u) * glm::sin(v));
-				vertices.push_back(glm::cosh(u));
-
-
-				indices.push_back(i++);
-
-				vertices.push_back(glm::sinh(u) * glm::cos(v + 0.01f));
-				vertices.push_back(glm::sinh(u) * glm::sin(v + 0.01f));
-				vertices.push_back(glm::cosh(u));
-
-
-				indices.push_back(i++);
-				//indices.push_back(i + 1);
-			}
-
-		}
-
-		VertexBufferLayout layout;
-		layout.Push<float>(3);
-			
-		return std::make_shared<Shape3D>(vertices, indices, layout);
-	}
 
 	static std::shared_ptr<Shape3D> CreateSphere(const GLuint numberSlices) 
 	{
@@ -307,38 +225,45 @@ public:
 		float height = 0.5f;
 
 		std::vector<GLfloat> vertices = {
-			-height, -height, -height,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,
-			-height, -height, +height,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
-			+height, -height, +height,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-			+height, -height, -height,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
+		 //positions 		  normals			   texCoords
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
 
-			-height, +height, -height,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
-			-height, +height, +height,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
-			+height, +height, +height,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
-			+height, +height, -height,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
 
-			-height, -height, -height,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
-			-height, +height, -height,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
-			+height, +height, -height,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
-			+height, -height, -height,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
 
-			-height, -height, +height,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
-			-height, +height, +height,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-			+height, +height, +height,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
-			+height, -height, +height,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
 
-			-height, -height, -height, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-			-height, -height, +height, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-			-height, +height, +height, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
-			-height, +height, -height, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
 
-			+height, -height, -height,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
-			+height, -height, +height,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f,
-			+height, +height, +height,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f,
-			+height, +height, -height,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
 		};
 
-		std::vector<GLuint> indices = { 0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 15, 14, 12, 14, 13, 16, 17, 18, 16, 18, 19, 20, 23, 22, 20, 22, 21 };
+		std::vector<GLuint> indices = { 
+			0, 2, 1,		0, 3, 2, 
+			4, 5, 6,		4, 6, 7, 
+			8, 9, 10,		8, 10, 11, 
+			12, 15, 14,		12, 14, 13, 
+			16, 17, 18,		16, 18, 19, 
+			20, 23, 22,		20, 22, 21 };
 
 		VertexBufferLayout layout;
 		layout.Push<float>(3);

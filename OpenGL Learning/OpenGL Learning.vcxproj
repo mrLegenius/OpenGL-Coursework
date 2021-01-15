@@ -149,6 +149,8 @@
     <ClCompile Include="src\TextureGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\shaders\Lit_Color.shader" />
+    <None Include="res\shaders\Lit_Texture.shader" />
     <None Include="res\shaders\Lit_Water.shader" />
     <None Include="res\shaders\Unlit_Texture.shader" />
     <None Include="res\shaders\Unlit_Color.shader" />

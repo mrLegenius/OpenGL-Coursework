@@ -495,6 +495,8 @@
     <None Include="res\shaders\Unlit_Texture.shader" />
     <None Include="res\shaders\Lit.shader" />
     <None Include="res\shaders\Lit_Water.shader" />
+    <None Include="res\shaders\Lit_Color.shader" />
+    <None Include="res\shaders\Lit_Texture.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h">

@@ -24,12 +24,13 @@ namespace test
 		void OnRender() override;
 		void OnImGuiRender() override;
 	private:
-		float amplitude = 100;
+		float amplitude = 10000;
 		int octaves = 8;
 		float persistence = 0.5f;
-		long long seed;
-		float quality = 100;
-		glm::vec2 offset;
+		float height = 10.0f;
+		unsigned long long seed;
+		float quality = 128;
+		glm::vec3 dirLight;
 
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
@@ -44,13 +45,15 @@ namespace test
 		std::unique_ptr<Shader> m_ObjectShader;
 		std::unique_ptr<Shader> m_LightSourceShader;
 		std::shared_ptr<Texture> m_DiffuseTexture;
-		std::unique_ptr<Texture> m_SpecularTexture;
-		std::unique_ptr<Texture> m_EmissionTexture;
+		std::shared_ptr<Texture> m_SpecularTexture;
+		std::shared_ptr<Texture> m_EmissionTexture;
 
 
 		std::shared_ptr<Shape3D> m_TestObject;
 		std::unique_ptr<Shader> m_TestShader;
 		std::shared_ptr<Texture> m_TestTexture;
+
+		std::shared_ptr<Texture> m_TestNormalTexture;
 
 		glm::mat4 m_Proj, m_View;
 	};

@@ -69,22 +69,13 @@ Texture::Texture(GLfloat data[], int width, int height)
 
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
 
-	GLfloat *mapData = new GLfloat[width * height * sizeof(GLfloat)];
-	for (int i = 0; i < width * height * sizeof(GLfloat); ++i)
-		mapData[i] = 0.1f * (rand() % 11);
-
-	//memset(data, 1.0f, width * height * sizeof(GLfloat));
-
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
-	//GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, data);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, mapData);
+	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, data));
 
-	delete[] mapData;
 	m_Width = width;
 	m_Height = height;
 }
@@ -95,6 +86,10 @@ Texture::~Texture()
 	GLCall(glDeleteTextures(1, &m_RendererID));
 }
 
+void Texture::GetPixels(GLfloat* data)
+{
+	GLCall(glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, data));
+}
 void Texture::Bind(unsigned int slot) const
 {
 	GLCall(glActiveTexture(GL_TEXTURE0 + slot))
