@@ -143,6 +143,9 @@ void main()
 	//vec3 norm = normalize(Normal);
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
 
+	float ratio = 1.00 / 1.52;
+	vec3 R = refract(-viewDir, norm, ratio);
+
 	// phase 1: Directional lighting
 	vec3 result = CalcDirLight(u_DirLight, norm, viewDir);
 
@@ -153,8 +156,7 @@ void main()
 	for (int i = 0; i < u_SpotLightsCount; i++)
 		result += CalcSpotLight(u_SpotLights[i], norm, FragPos, viewDir);
 
-
-	color = vec4(result, transparency);
+	color = vec4(mix(result, R, 1), transparency);
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)

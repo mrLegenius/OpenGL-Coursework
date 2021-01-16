@@ -13,9 +13,6 @@ std::shared_ptr<Shape3D> LandscapeGenerator::Generate(std::shared_ptr<Texture> h
 	GLuint width = heightMap->GetWidth();
 	GLuint height = heightMap->GetHeight();
 
-	float sqrWidth = 1.0f / width;
-	float sqrHeight = 1.0f / height;
-
 	GLfloat* data = new GLfloat[width * height * sizeof(GLfloat)]; 
 
 	float cornerX = width / -2.0f - (width % 2 ? 0.5f : 0);
@@ -41,8 +38,6 @@ std::shared_ptr<Shape3D> LandscapeGenerator::Generate(std::shared_ptr<Texture> h
 		{ 1.0f, 1.0f } //PEAK
 	};
 
-	std::cout << "size of landscape = " << width << "x" << height << std::endl;
-	std::cout << "corner = " << cornerX << "," << cornerZ << std::endl;
 	for (GLuint x = 0; x < width; x++)
 	{
 		for (GLuint y = 0; y < height; y++, vertexIndex++)
@@ -92,34 +87,6 @@ std::shared_ptr<Shape3D> LandscapeGenerator::Generate(std::shared_ptr<Texture> h
 				indices.push_back(vertexIndex + 1);
 			}
 		}
-	}
-	//Calculate Normals
-	for (GLuint i = 0; i < indices.size(); i += 3)
-	{
-		int i1 = indices[i];
-		int i2 = indices[i+1];
-		int i3 = indices[i+2];
-
-		glm::vec3 p1(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
-		glm::vec3 p2(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
-		glm::vec3 p3(vertices[i3], vertices[i3 + 1], vertices[i3 + 2]);
-
-		glm::vec3 vec1(p2 - p1);
-		glm::vec3 vec2(p3 - p1);
-
-		glm::vec3 norm(glm::cross(vec1, vec2));
-
-		vertices[i1 + 3] = norm.x;
-		vertices[i1 + 4] = norm.y;
-		vertices[i1 + 5] = norm.z;
-
-		vertices[i2 + 3] = norm.x;
-		vertices[i2 + 4] = norm.y;
-		vertices[i2 + 5] = norm.z;
-
-		vertices[i3 + 3] = norm.x;
-		vertices[i3 + 4] = norm.y;
-		vertices[i3 + 5] = norm.z;
 	}
 
 	VertexBufferLayout layout;

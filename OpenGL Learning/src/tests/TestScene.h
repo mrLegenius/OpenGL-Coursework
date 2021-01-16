@@ -43,6 +43,9 @@ namespace test
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
 
+		std::shared_ptr<Shape3D> m_Skybox;
+		std::shared_ptr<Texture> m_SkyboxTexture;
+		std::shared_ptr<Shader> m_SkyboxShader;
 
 		std::shared_ptr<Shape3D> m_Water;
 		std::unique_ptr<Shader> m_WaterShader;

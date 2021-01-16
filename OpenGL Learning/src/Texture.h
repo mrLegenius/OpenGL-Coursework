@@ -10,14 +10,17 @@ private:
 	unsigned char* m_LocalBuffer = nullptr;
 	int m_Width = 0, m_Height = 0, m_BPP = 0;
 public:
+	Texture();
 	Texture(const std::string& path);
 	Texture(GLfloat data[], int width, int height);
-	Texture();
+	Texture(std::string paths[6]);
+	
 	~Texture();
 
 	
 
 	void Bind(unsigned int slot = 0) const;
+	void Bind(unsigned int slot, GLenum target) const;
 	void Unbind() const;
 
 	inline int GetWidth() const { return m_Width; }

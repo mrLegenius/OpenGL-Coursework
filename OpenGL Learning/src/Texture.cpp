@@ -63,6 +63,7 @@ Texture::Texture()
 	m_Height = 1;
 }
 
+
 Texture::Texture(GLfloat data[], int width, int height)
 {
 	GLCall(glGenTextures(1, &m_RendererID));
@@ -80,6 +81,39 @@ Texture::Texture(GLfloat data[], int width, int height)
 	m_Height = height;
 }
 
+Texture::Texture(std::string paths[6])
+{
+	GLCall(glGenTextures(1, &m_RendererID));
+
+	GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, m_RendererID));
+
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < 6; i++)
+	{
+		unsigned char* data = stbi_load(paths[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			m_Width += width;
+			m_Height += height;
+
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap texture failed to load at path: " << paths[i] << std::endl;
+			stbi_image_free(data);
+		}
+	}
+
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+}
 
 Texture::~Texture()
 {
@@ -96,6 +130,13 @@ void Texture::Bind(unsigned int slot) const
 	GLCall(glActiveTexture(GL_TEXTURE0 + slot))
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
 }
+
+void Texture::Bind(unsigned int slot, GLenum target) const
+{
+	GLCall(glActiveTexture(GL_TEXTURE0 + slot))
+	GLCall(glBindTexture(target, m_RendererID));
+}
+
 
 void Texture::Unbind() const
 {
