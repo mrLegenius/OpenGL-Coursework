@@ -12,8 +12,6 @@ Shader::Shader(const std::string& filepath, const int pointLightsCount, const in
 {
 	auto source = ParseShader(filepath, pointLightsCount, spotLightsCount);
 	m_RendererID = CreateShader(source.VertexSource, source.FragmentSource);
-
-	std::cout << "Created shader(" << m_RendererID << ") in " << filepath << std::endl;
 }
 
 Shader::~Shader()

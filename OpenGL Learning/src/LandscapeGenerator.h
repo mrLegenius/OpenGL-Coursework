@@ -7,6 +7,6 @@ class LandscapeGenerator
 private:
     static float map(float value, float min1, float max1, float min2, float max2);
 public:
-    static std::shared_ptr<Shape3D> Generate(GLuint dimensions, std::shared_ptr<Texture> heightMap, float maxHeight = 1);
+    static std::shared_ptr<Shape3D> Generate(std::shared_ptr<Texture> heightMap, float heightMultiplier = 1);
 };
 

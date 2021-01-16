@@ -8,13 +8,8 @@ std::shared_ptr<Shape3D> LandscapeGenerator::Generate(std::shared_ptr<Texture> h
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
 
-	glm::vec2 startPoint(-0.5f, 0.5f);
-
 	GLuint width = heightMap->GetWidth();
 	GLuint height = heightMap->GetHeight();
-
-	float sqrWidth = 1.0f / width;
-	float sqrHeight = 1.0f / height;
 
 	GLfloat* data = new GLfloat[width * height * sizeof(GLfloat)]; 
 
