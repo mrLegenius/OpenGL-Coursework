@@ -1,48 +1,121 @@
 #include "TextureGenerator.h"
 #include "PerlinNoiseGenerator.h"
-
-std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureSize, GLuint octaves, float persistence, float scale, unsigned long long seed)
+#include "glm/gtc/noise.hpp"
+#include <iostream>
+std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureSize, float scale, int octaves, float persistence, float lacunarity, unsigned long long seed, glm::vec2 offset)
 {
-	PerlinNoiseGenerator gen(textureSize.x, textureSize.y, octaves, persistence, seed);
-
+	srand(seed);
 	GLfloat* data = new GLfloat[textureSize.x * textureSize.y * sizeof(GLfloat)];
-	srand(seed * 10);
-	//glm::vec2 offset(rand() % 20000 - 10000, rand() % 20000 - 10000);
-	glm::vec2 offset(0, 0);
-	// For each pixel in the texture...
-	float y = 0.0f;
 
-
-	if (scale <= 0)
-		scale = 0.00001f;
-
-	while (y < textureSize.y)
+	glm::vec2 *octaveOffsets = new glm::vec2[octaves];
+	
+	for (int i = 0; i < octaves; i++)
 	{
-		float x = 0.0F;
-		while (x < textureSize.x)
-		{
-			float xCoord = offset.x + x / (textureSize.x * scale);
-			float yCoord = offset.y + y / (textureSize.y * scale);
-			float sample = gen.ValueNoise_2D(xCoord, yCoord);
+		float offsetX = rand() % 20000 - 10000;
+		float offsetY = rand() % 20000 - 10000;
 
-			GLfloat result = sample;// *0.5f + 0.5f;
-			unsigned int index = ((int)y * textureSize.x + (int)x) * 4;
-
-			data[index + 0] = result;
-			data[index + 1] = result;
-			data[index + 2] = result;
-			data[index + 3] = 1.0f;
-
-			x++;
-		}
-		y++;
+		octaveOffsets[i] = glm::vec2(offsetX, offsetY) + offset;
 	}
+
+	if (scale <= 1)
+		scale = 1.00001f;
+
+	float maxNoiseHeight = -99999999.0f;
+	float minNoiseHeight =  99999999.0f;
+	
+	float halfWidth = textureSize.x / 2.0f;
+	float halfHeight = textureSize.y / 2.0f;
+
+	for (float y = 0.0f; y < textureSize.y; y++)
+		for (float x = 0.0f; x < textureSize.x; x++)
+		{
+			float amplitude = 1;
+			float frequency = 1;
+			float noiseHeight = 0;
+
+			for (int i = 0; i < octaves; i++)
+			{
+				float xCoord = (x - halfWidth) / scale * frequency + octaveOffsets[i].x;
+				float yCoord = (y - halfHeight) / scale * frequency + octaveOffsets[i].y;
+
+				float perlinValue = glm::perlin(glm::vec2(xCoord, yCoord)) * 2 - 1;
+				noiseHeight += perlinValue * amplitude;
+
+				
+
+				amplitude *= persistence;
+				frequency *= lacunarity;
+			}
+			//std::cout << " result height = " << noiseHeight << std::endl;
+			if (noiseHeight > maxNoiseHeight)
+				maxNoiseHeight = noiseHeight;
+			else if (noiseHeight < minNoiseHeight)
+				minNoiseHeight = noiseHeight;
+
+			unsigned int index = ((int)y * textureSize.x + (int)x) * 4;
+			data[index + 0] = noiseHeight;
+			data[index + 1] = noiseHeight;
+			data[index + 2] = noiseHeight;
+			data[index + 3] = 1.0f;
+		}
+	//std::cout << " max height = " << maxNoiseHeight << " | min height = " << minNoiseHeight << std::endl;
+
+	for (float y = 0.0f; y < textureSize.y; y++)
+		for (float x = 0.0f; x < textureSize.x; x++)
+		{
+			unsigned int index = ((int)y * textureSize.x + (int)x) * 4;
+			float value = 0;
+			if (data[index] != 0)
+				value = (data[index] - minNoiseHeight) / (maxNoiseHeight - minNoiseHeight);
+			
+			//std::cout << "generated value = " << data[index] << " | lerp value = " << value << std::endl;
+			data[index + 0] = value;
+			data[index + 1] = value;
+			data[index + 2] = value;
+			data[index + 3] = 1.0f;
+		}
+
 	auto texture = std::make_shared<Texture>(data, textureSize.x, textureSize.y);
 
+	delete[] octaveOffsets;
 	delete[] data;
 	return texture;
 }
+std::shared_ptr<Texture> TextureGenerator::ApplyCookie(std::shared_ptr<Texture> texture, std::shared_ptr<Texture> cookie)
+{
+	GLuint width = texture->GetWidth();
+	GLuint height = texture->GetHeight();
 
+	GLuint cookieWidth = cookie->GetWidth();
+	GLuint cookieHeight = cookie->GetHeight();
+
+	GLfloat* pixels = new GLfloat[cookieWidth * cookieHeight * sizeof(GLfloat)];
+	GLfloat* data = new GLfloat[width * height * sizeof(GLfloat)];
+	cookie->GetPixels(pixels);
+	texture->GetPixels(data);
+
+	for (unsigned w = 0; w < width; ++w)
+	{
+		for (unsigned h = 0; h < height; ++h)
+		{
+			float ix = map(w, 0, width, 0, cookieWidth);
+			float iy = map(h, 0, height, 0, cookieHeight);
+			float cookieValue = pixels[((int)iy * cookieWidth + (int)ix)*4];
+
+			unsigned index = (w * width + h) * 4;
+			data[index + 0] *= cookieValue;
+			data[index + 1] *= cookieValue;
+			data[index + 2] *= cookieValue;
+			data[index + 3] = 1.0f;
+		}
+	}
+
+	auto result = std::make_shared<Texture>(data, width, height);
+	delete[] data;
+	delete[] pixels;
+
+	return result;
+}
 std::shared_ptr<Texture> TextureGenerator::GenerateNormalMapFromTexture(std::shared_ptr<Texture> texture)
 {
 	unsigned int width = texture->GetWidth();
@@ -51,6 +124,7 @@ std::shared_ptr<Texture> TextureGenerator::GenerateNormalMapFromTexture(std::sha
 	GLfloat *pixels = new GLfloat[width * height * sizeof(GLfloat)];
 	GLfloat *data = new GLfloat[width * height * sizeof(GLfloat)];
 	texture->GetPixels(pixels);
+
 	for (unsigned w = 0; w < width; ++w)
 	{
 		for (unsigned h = 0; h < height; ++h)
@@ -62,6 +136,56 @@ std::shared_ptr<Texture> TextureGenerator::GenerateNormalMapFromTexture(std::sha
 			data[index + 1] = toNormalizedRGB(normal.y);
 			data[index + 2] = toNormalizedRGB(normal.z);
 			data[index + 3] = 1.0f;
+		}
+	}
+
+	auto result = std::make_shared<Texture>(data, width, height);
+	delete[] data;
+	delete[] pixels;
+
+	return result;
+}
+std::shared_ptr<Texture> TextureGenerator::GenerateColoredHeightMap(std::shared_ptr<Texture> texture)
+{
+	unsigned int width = texture->GetWidth();
+	unsigned int height = texture->GetHeight();
+
+	struct heightColor
+	{
+		glm::vec3 color;
+		float height;
+	};
+
+	const int colorsCount = 8;
+	heightColor heightColors[colorsCount] = {
+		{ glm::vec3(0.094f, 0.301f, 0.666f), 0.2f },
+		{ glm::vec3(0.16f, 0.419f, 0.878f), 0.4f },
+		{ glm::vec3(0.976f, 0.98f, 0.76f), 0.45f },
+		{ glm::vec3(0.294f, 0.647f, 0.035f), 0.55f },
+		{ glm::vec3(0.062f, 0.239f, 0.039f), 0.6f },
+		{ glm::vec3(0.368f, 0.266f, 0.149f), 0.7f },
+		{ glm::vec3(0.256f, 0.156f, 0.039f), 0.9f },
+		{ glm::vec3(0.96f, 0.96f, 0.96f), 1.0f }
+	};
+	GLfloat* pixels = new GLfloat[width * height * sizeof(GLfloat)];
+	GLfloat* data = new GLfloat[width * height * sizeof(GLfloat)];
+	texture->GetPixels(pixels);
+
+	for (unsigned w = 0; w < width; w++)
+	{
+		for (unsigned h = 0; h < height; h++)
+		{
+			for (int i = 0; i < colorsCount; i++)
+			{
+				unsigned index = (w * width + h) * 4;
+				if (pixels[index] > heightColors[i].height) continue;
+
+				data[index] = heightColors[i].color.r;
+				data[index + 1] = heightColors[i].color.g;
+				data[index + 2] = heightColors[i].color.b;
+				data[index + 3] = 1.0f;
+				break;
+			}
 		}
 	}
 
@@ -121,5 +245,9 @@ int TextureGenerator::clamp(const int& value, const int& max)
 	else if (value < 0)
 		return 0;
 	return value;
+}
+
+float TextureGenerator::map(float value, float min1, float max1, float min2, float max2) {
+	return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
 }
 
