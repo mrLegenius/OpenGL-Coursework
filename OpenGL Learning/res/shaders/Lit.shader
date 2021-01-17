@@ -12,9 +12,11 @@ out vec2 TexCoords;
 uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
+uniform vec4 u_Plane;
 
 void main()
 {
+	gl_ClipDistance[0] = dot(vec4(position, 1.0), u_Plane);
 	FragPos = vec3(u_Model * vec4(position, 1.0));
 	Normal = mat3(transpose(inverse(u_Model))) * normal;
 	TexCoords = texCoords;

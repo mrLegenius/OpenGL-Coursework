@@ -81,6 +81,38 @@ Texture::Texture(GLfloat data[], int width, int height)
 	m_Height = height;
 }
 
+Texture::Texture(int width, int height)
+{
+	GLCall(glGenTextures(1, &m_RendererID));
+
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+	m_Width = width;
+	m_Height = height;
+}
+
+
+Texture::Texture(int width, int height, GLenum format)
+{
+	GLCall(glGenTextures(1, &m_RendererID));
+
+	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));
+
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
+
+	m_Width = width;
+	m_Height = height;
+}
+
+
 Texture::Texture(std::string paths[6])
 {
 	GLCall(glGenTextures(1, &m_RendererID));

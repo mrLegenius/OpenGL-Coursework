@@ -125,6 +125,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\RenderBuffer.cpp" />
+    <ClCompile Include="src\FrameBuffer.cpp" />
     <ClCompile Include="src\PerlinNoiseGenerator.cpp" />
     <ClCompile Include="src\LandscapeGenerator.cpp" />
     <ClCompile Include="src\Shape3D.cpp" />
@@ -294,6 +296,8 @@
     <None Include="src\vendor\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\RenderBuffer.h" />
+    <ClInclude Include="src\FrameBuffer.h" />
     <ClInclude Include="src\PerlinNoiseGenerator.h" />
     <ClInclude Include="src\LandscapeGenerator.h" />
     <ClInclude Include="src\Shape3D.h" />

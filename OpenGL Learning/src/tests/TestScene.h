@@ -1,15 +1,21 @@
 #pragma once
-#include <time.h>
+#include <ctime>
 #include "Test.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+
+#include "FrameBuffer.h"
+#include "RenderBuffer.h"
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 #include "Texture.h"
+
 #include "Settings.h"
 #include "Camera.h"
 #include "Shape3D.h"
+
 #include <memory>
 
 namespace test
@@ -24,8 +30,14 @@ namespace test
 		void OnRender() override;
 		void OnImGuiRender() override;
 	private:
-
+		void RenderWater(Renderer renderer);
+		void RenderTestTextures(Renderer renderer);
+		void RenderScene(Renderer renderer, glm::vec4 clippingPlane = glm::vec4(0));
+		void RenderSkybox(Renderer renderer);
 		void GenerateLand();
+
+		float waterTransparency = 10.0f;
+		float waterMoveFactor;
 
 		glm::vec3 landScale = glm::vec3(0.1);
 		glm::vec3 landPos;
@@ -43,6 +55,21 @@ namespace test
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
 
+		float waterHeight;
+
+		std::shared_ptr<Shape3D> m_BufferObject;
+		std::shared_ptr<FrameBuffer> m_FrameBuffer;
+		std::shared_ptr<RenderBuffer> m_RenderBuffer;
+		std::shared_ptr<Texture> m_BufferTexture;
+
+		std::shared_ptr<FrameBuffer> m_ReflectionBuffer;
+		std::shared_ptr<RenderBuffer> m_ReflectionRenderBuffer;
+		std::shared_ptr<Texture> m_ReflectionTexture;
+
+		std::shared_ptr<FrameBuffer> m_RefractionBuffer;
+		std::shared_ptr<Texture> m_RefractionTexture;
+		std::shared_ptr<Texture> m_RefractionDepthTexture;
+
 		std::shared_ptr<Shape3D> m_Skybox;
 		std::shared_ptr<Texture> m_SkyboxTexture;
 		std::shared_ptr<Shader> m_SkyboxShader;
@@ -50,6 +77,8 @@ namespace test
 		std::shared_ptr<Shape3D> m_Water;
 		std::unique_ptr<Shader> m_WaterShader;
 		std::shared_ptr<Texture> m_WaterTexture;
+		std::shared_ptr<Texture> m_WaterDistortion;
+		std::shared_ptr<Texture> m_WaterNormalMap;
 
 
 		std::unique_ptr<Camera> m_Camera;
