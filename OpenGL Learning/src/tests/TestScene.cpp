@@ -12,10 +12,46 @@
 
 
 constexpr float WATER_SPEED = 0.03f;
+
+float map(float value, float min1, float max1, float min2, float max2) {
+	return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
+
+float clamp01(float value)
+{
+	if (value < 0)
+		value = 0;
+	if (value > 1)
+		value = 1;
+
+	return value;
+}
 namespace test 
 {
 	test::TestScene::TestScene() : m_LightPos(glm::vec3(0, 1, 0))
 	{
+		float peakHeight = 1.0f;
+		float mountainHeight = 0.8f;
+		float middleHeight = 0.6f;
+		float beachHeight = 0.4f;
+		float deepHeight = 0.2f;
+
+		float height = 0.2f;
+		float peak = clamp01(map(height, mountainHeight, peakHeight, 0, 1));
+
+		float mountain = clamp01(map(height, middleHeight, mountainHeight, 0, 1));
+		mountain -= clamp01(map(height, mountainHeight, peakHeight, 0, 1));
+
+		float middle = clamp01(map(height, beachHeight, middleHeight, 0, 1));
+		middle -= clamp01(map(height, middleHeight, mountainHeight, 0, 1));
+
+		float beach = clamp01(map(height, deepHeight, beachHeight, 0, 1));
+		beach -= clamp01(map(height, beachHeight, middleHeight, 0, 1));
+
+		float deep = clamp01(map(height, beachHeight, deepHeight, 0, 1));
+
+		std::cout << peak << " " << mountain << " " << middle << " " << beach << " " << deep << std::endl;
 		m_Camera = std::make_unique<Camera>(glm::vec3(0, 0.0f, 5.0f));
 		GLCall(glEnable(GL_DEPTH_TEST));
 		GLCall(glEnable(GL_BLEND));
@@ -42,41 +78,61 @@ namespace test
 		m_SkyboxShader->Bind();
 		m_SkyboxShader->SetUniform1i("u_SkyboxTexture", 0);
 
-		//WATER
-		water.transform.eulerAngles.x = 90;
-		water.transform.scale.x = landScale.x * quality;
-		water.transform.scale.y = landScale.z * quality;
+		#pragma region WATER_SETTINGS
+			water.transform.eulerAngles.x = 90;
+			water.transform.scale.x = landScale.x * quality;
+			water.transform.scale.y = landScale.z * quality;
 
-		water.SetResolution(100);
+			water.SetResolution(100);
 
-		water.SetDiffuseTexture("res/textures/Water.jpg");
-		water.SetDuDvMap("res/textures/DuDv_Water_Map.png");
-		water.SetNormalMap("res/textures/Normal_Water_Map.png");
+			water.SetDiffuseTexture("res/textures/Water.jpg");
+			water.SetDuDvMap("res/textures/DuDv_Water_Map.png");
+			water.SetNormalMap("res/textures/Normal_Water_Map.png");
 		
-		water.useDuDvMap = true;
-		water.useNormalMap = true;
-		water.useDiffuseTexture = true;
+			water.useDuDvMap = true;
+			water.useNormalMap = true;
+			water.useDiffuseTexture = true;
 
-		water.UpdateData();
-		
+			water.UpdateData();
+		#pragma endregion	
 		//MAIN OBJECT		
 		m_Object = Shape3D::CreateCube();
+		m_ObjectShader = std::make_unique<Shader>("res/shaders/Lit_Land.shader", 1);
+		m_ObjectShader->Bind();
+
+		m_PeakTexture = std::make_shared<Texture>("res/textures/land/peak.jpg");
+		m_MountainTexture = std::make_shared<Texture>("res/textures/land/mountain.jpg");
+		m_MiddleTexture = std::make_shared<Texture>("res/textures/land/middle.jpg");
+		m_BeachTexture = std::make_shared<Texture>("res/textures/land/beach.jpg");
+		m_DeepTexture = std::make_shared<Texture>("res/textures/land/deep.jpg");
+
+		m_ObjectShader->SetUniform1f("peakHeight", 0.95f);
+		m_ObjectShader->SetUniform1f("mountainHeight", 0.9f);
+		m_ObjectShader->SetUniform1f("middleHeight", 0.3f);
+		m_ObjectShader->SetUniform1f("beachHeight", 0.25f);
+		m_ObjectShader->SetUniform1f("deepHeight", 0.1f);
+
+		m_ObjectShader->SetUniform1i("peakTexture", 0);
+		m_ObjectShader->SetUniform1i("mountainTexture", 1);
+		m_ObjectShader->SetUniform1i("middleTexture", 2);
+		m_ObjectShader->SetUniform1i("beachTexture", 3);
+		m_ObjectShader->SetUniform1i("deepTexture", 4);
+		m_ObjectShader->SetUniform1i("heightMap", 5);
+
 		m_DiffuseTexture = std::make_shared<Texture>("res/textures/Dark-Green-Grass.jpg");
 		m_SpecularTexture = std::make_shared<Texture>("res/textures/Dark-Green-Grass.jpg");
 		m_EmissionTexture = std::make_shared<Texture>("res/textures/container2_emission.jpg");
 		m_Cookie = std::make_shared<Texture>("res/textures/Cookie.png");
-		m_ObjectShader = std::make_unique<Shader>("res/shaders/Lit.shader", 1);
-		m_ObjectShader->Bind();
-
+		
 		m_ObjectShader->SetUniform1i("u_Material.useDiffuseMap", 1);
 		m_ObjectShader->SetUniform1i("u_Material.useSpecularMap", 0);
 		m_ObjectShader->SetUniform1i("u_Material.useNormalMap", 0);
 		m_ObjectShader->SetUniform1i("u_Material.useEmissionMap", 0);
 
-		m_ObjectShader->SetUniform1i("u_Material.diffuseMap", 0);
-		m_ObjectShader->SetUniform1i("u_Material.specularMap", 1);
-		m_ObjectShader->SetUniform1i("u_Material.emissionMap", 2);
-		m_ObjectShader->SetUniform1i("u_Material.normalMap", 3);
+		//m_ObjectShader->SetUniform1i("u_Material.diffuseMap", 0);
+		//m_ObjectShader->SetUniform1i("u_Material.specularMap", 1);
+		//m_ObjectShader->SetUniform1i("u_Material.emissionMap", 2);
+		//m_ObjectShader->SetUniform1i("u_Material.normalMap", 3);
 
 		m_ObjectShader->SetUniform3f("u_DirLight.ambient", 0.05f, 0.05f, 0.05f);
 		m_ObjectShader->SetUniform3f("u_DirLight.diffuse", 0.4f, 0.4f, 0.4f);
@@ -237,6 +293,7 @@ namespace test
 		ImGui::Text("---------------");
 		ImGui::Text("Land Generation");
 		ImGui::Text("---------------");
+		ImGui::DragFloat("Height Of Texture", &heightForTextures, 0.01f, 0.0001, 1.0f);
 		ImGui::InputFloat3("Land Pos", &landPos[0]);
 		ImGui::InputFloat3("Land Scale", &landScale[0]);
 		ImGui::InputFloat("Scale", &scale, 1, 10, 3);
@@ -289,10 +346,12 @@ namespace test
 
 		m_View = m_Camera->GetViewMatrix();
 		
-		m_DiffuseTexture->Bind();
-		m_SpecularTexture->Bind(1);
-		m_EmissionTexture->Bind(2);
-		m_TestNormalTexture->Bind(3);
+		m_PeakTexture->Bind(0);
+		m_MountainTexture->Bind(1);
+		m_MiddleTexture->Bind(2);
+		m_BeachTexture->Bind(3);
+		m_DeepTexture->Bind(4);
+		m_CookiedHeightMapTexture->Bind(5);
 
 		//Landscape
 		{
@@ -306,7 +365,7 @@ namespace test
 			Materials::SetBlackRubber(shader);
 
 			shader.SetUniform1f("u_Tiling", 20.0f);
-			//shader.SetUniform1f("iTime", glfwGetTime());
+			shader.SetUniform1f("heightTexture", heightForTextures);
 
 			std::string light = "u_PointLights[0]";
 

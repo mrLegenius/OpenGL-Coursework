@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Lit_Color.shader" />
+    <None Include="res\shaders\Lit_Land.shader" />
     <None Include="res\shaders\Lit_Texture.shader" />
     <None Include="res\shaders\Lit_Water.shader" />
     <None Include="res\shaders\Unlit_Skybox.shader" />

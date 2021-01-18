@@ -53,6 +53,8 @@ namespace test
 		float quality = 128;
 		glm::vec3 dirLight;
 
+		float heightForTextures = 0.5f;
+
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
 
@@ -60,17 +62,16 @@ namespace test
 		std::shared_ptr<Texture> m_SkyboxTexture;
 		std::shared_ptr<Shader> m_SkyboxShader;
 
-		std::shared_ptr<Shape3D> m_Water;
-		std::unique_ptr<Shader> m_WaterShader;
-		std::shared_ptr<Texture> m_WaterTexture;
-		std::shared_ptr<Texture> m_WaterDistortion;
-		std::shared_ptr<Texture> m_WaterNormalMap;
-
-
 		std::unique_ptr<Camera> m_Camera;
 		std::shared_ptr<Shape3D> m_Object;
 		std::shared_ptr<Shape3D> m_LightSource;
 		
+		std::shared_ptr<Texture> m_PeakTexture;
+		std::shared_ptr<Texture> m_MountainTexture;
+		std::shared_ptr<Texture> m_MiddleTexture;
+		std::shared_ptr<Texture> m_BeachTexture;
+		std::shared_ptr<Texture> m_DeepTexture;
+
 		glm::vec3 m_LightPos;
 
 		std::unique_ptr<Shader> m_ObjectShader;
