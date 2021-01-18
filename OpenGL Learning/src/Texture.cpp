@@ -99,6 +99,7 @@ Texture::Texture(std::string paths[6])
 	GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, m_RendererID));
 
 	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(0);
 	for (unsigned int i = 0; i < 6; i++)
 	{
 		unsigned char* data = stbi_load(paths[i].c_str(), &width, &height, &nrChannels, 0);

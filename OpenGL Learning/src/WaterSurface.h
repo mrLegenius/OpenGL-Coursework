@@ -16,8 +16,6 @@
 class WaterSurface
 {
 private:
-	std::string prev_diffuseTexture;
-	std::string prev_specularTexture;
 	std::string prev_dudvMap;
 	std::string prev_normalMap;
 	unsigned int prev_resolution = 0;
@@ -33,8 +31,6 @@ private:
 	float waveStrength = 0.04;
 	float moveFactor = 0;
 
-	char diffuseTexture[64];
-	char specularTexture[64];
 	char dudvMap[64];
 	char normalMap[64];
 
@@ -48,8 +44,6 @@ private:
 
 	std::shared_ptr<Shape3D> m_Plane;
 	std::shared_ptr<Shader> m_WaterShader;
-	std::shared_ptr<Texture> m_DiffuseTexture;
-	std::shared_ptr<Texture> m_SpecularTexture;
 	std::shared_ptr<Texture> m_Distortion;
 	std::shared_ptr<Texture> m_NormalMap;
 
@@ -67,8 +61,6 @@ public:
 	WaterSurface();
 
 	void SetResolution(unsigned int value);
-	void SetDiffuseTexture(const std::string& path);
-	void SetSpecularTexture(const std::string& path);
 	void SetDuDvMap(const std::string& path);
 	void SetNormalMap(const std::string& path);
 

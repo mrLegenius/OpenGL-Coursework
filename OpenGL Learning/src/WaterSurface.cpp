@@ -6,8 +6,6 @@ WaterSurface::WaterSurface()
 {
 	m_WaterShader = std::make_shared<Shader>("res/shaders/Lit_Water.shader");
 
-    m_DiffuseTexture = std::make_shared<Texture>();
-    m_SpecularTexture = std::make_shared<Texture>();
     m_Distortion = std::make_shared<Texture>();
     m_NormalMap = std::make_shared<Texture>();
 
@@ -19,13 +17,11 @@ WaterSurface::WaterSurface()
 	m_WaterShader->SetUniform1i("u_PointLightsCount", 1);
 	m_WaterShader->SetUniform1i("u_SpotLightsCount", 1);
 
-	m_WaterShader->SetUniform1i("u_Material.diffuseMap", 0);
-	m_WaterShader->SetUniform1i("u_Material.specularMap", 1);
-	m_WaterShader->SetUniform1i("u_Material.normalMap", 2);
-	m_WaterShader->SetUniform1i("reflectionTexture", 3);
-	m_WaterShader->SetUniform1i("refractionTexture", 4);
-	m_WaterShader->SetUniform1i("dudvMap", 5);
-	m_WaterShader->SetUniform1i("depthMap", 6);
+	m_WaterShader->SetUniform1i("normalMap", 0);
+	m_WaterShader->SetUniform1i("reflectionTexture", 1);
+	m_WaterShader->SetUniform1i("refractionTexture", 2);
+	m_WaterShader->SetUniform1i("dudvMap", 3);
+	m_WaterShader->SetUniform1i("depthMap", 4);
 
 	auto& settings = Settings::GetInstance();
 
@@ -59,18 +55,6 @@ WaterSurface::WaterSurface()
 void WaterSurface::SetResolution(unsigned int value)
 {
 	resolution = value;
-}
-
-void WaterSurface::SetDiffuseTexture(const std::string& path)
-{
-	assert(path.size() < 64);
-	strcpy_s(diffuseTexture, path.c_str());
-}
-
-void WaterSurface::SetSpecularTexture(const std::string& path)
-{
-	assert(path.size() < 64);
-	strcpy_s(specularTexture, path.c_str());
 }
 
 void WaterSurface::SetDuDvMap(const std::string& path)
@@ -109,20 +93,6 @@ void WaterSurface::FinishRefractionRender()
 
 void WaterSurface::UpdateData()
 {
-	std::string difName = diffuseTexture;
-	if (difName != prev_diffuseTexture)
-	{
-		m_DiffuseTexture = std::make_shared<Texture>(difName);
-		prev_diffuseTexture = difName;
-	}
-
-	std::string specName = specularTexture;
-	if (specName != prev_specularTexture)
-	{
-		m_SpecularTexture = std::make_shared<Texture>(specName);
-		prev_specularTexture = specName;
-	}
-
 	std::string dudvName = dudvMap;
 	if (dudvName != prev_dudvMap)
 	{
@@ -143,17 +113,15 @@ void WaterSurface::UpdateData()
 		prev_resolution = resolution;
 	}
 	m_WaterShader->Bind();
-	m_WaterShader->SetUniform1i("u_Material.useDiffuseMap", (int)useDiffuseTexture);
-	m_WaterShader->SetUniform1i("u_Material.useSpecularMap", (int)useSpecularTexture);
-	m_WaterShader->SetUniform1i("u_Material.useDuDvMap", (int)useDuDvMap);
-	m_WaterShader->SetUniform1i("u_Material.useNormalMap", (int)useNormalMap);
-	m_WaterShader->SetUniform1i("useReflectionAndRefraction", (int)useReflectionAndRefraction);
-	m_WaterShader->SetUniform1i("u_Material.useDepth", (int)useDepth);
+	m_WaterShader->SetUniform1i("useDuDvMap", (int)useDuDvMap);
+	m_WaterShader->SetUniform1i("u_UseNormalMap", (int)useNormalMap);
+	m_WaterShader->SetUniform1i("u_UseReflectionAndRefraction", (int)useReflectionAndRefraction);
+	m_WaterShader->SetUniform1i("useDepth", (int)useDepth);
 
 	m_WaterShader->SetUniform1f("u_Tiling", tiling);
-	m_WaterShader->SetUniform1f("transparency", transparency);
-	m_WaterShader->SetUniform1f("reflectivity", reflectivity);
-	m_WaterShader->SetUniform1f("waveStrength", waveStrength);
+	m_WaterShader->SetUniform1f("u_Transparency", transparency);
+	m_WaterShader->SetUniform1f("u_Reflectivity", reflectivity);
+	m_WaterShader->SetUniform1f("u_WaveStrength", waveStrength);
 }
 
 void WaterSurface::OnUpdate(float deltaTime)
@@ -167,62 +135,57 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLigh
 	auto& settings = Settings::GetInstance();
 
 	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
+
 	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
 	auto view = camera.GetViewMatrix();
+	auto model = transform.GetModel();
 
-	m_DiffuseTexture->Bind();
-	m_SpecularTexture->Bind(1);
-	m_NormalMap->Bind(2);
-	m_ReflectionTexture->Bind(3);
-	m_RefractionTexture->Bind(4);
-	m_Distortion->Bind(5);
-	m_RefractionDepthTexture->Bind(6);
-	{
-		auto& object = *m_Plane;
-		auto& shader = *m_WaterShader;
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), transform.position);
-		model = glm::rotate(model, glm::radians(transform.eulerAngles.x), glm::vec3(1.0f, 0, 0));
-		model = glm::rotate(model, glm::radians(transform.eulerAngles.y), glm::vec3(0, 1.0f, 0));
-		model = glm::rotate(model, glm::radians(transform.eulerAngles.z), glm::vec3(0, 0, 1.0f));
-		model = glm::scale(model, transform.scale);
-		shader.Bind();
+	m_NormalMap->Bind(0);
+	m_ReflectionTexture->Bind(1);
+	m_RefractionTexture->Bind(2);
+	m_Distortion->Bind(3);
+	m_RefractionDepthTexture->Bind(4);
 
-		Materials::SetTurquoise(shader);
+	auto& object = *m_Plane;
+	auto& shader = *m_WaterShader;
+	
+	shader.Bind();
 
-		shader.SetUniform1f("u_Time", glfwGetTime());
-		shader.SetUniform1f("u_MoveFactor", moveFactor);
+	Materials::SetTurquoise(shader);
 
-		std::string light = "u_PointLights[0]";
+	shader.SetUniform1f("u_Time", glfwGetTime());
+	shader.SetUniform1f("u_MoveFactor", moveFactor);
 
-		shader.SetUniformVec3f(light + ".position", lightPos);
-		shader.SetUniformVec3f(light + ".ambient", glm::vec3(0.5f, 0.5f, 0.5f));
-		shader.SetUniformVec3f(light + ".diffuse", glm::vec3(0.3f, 0.3f, 0.3f));
-		shader.SetUniformVec3f(light + ".specular", glm::vec3(0.3f, 0.3f, 0.3f));
-		shader.SetUniform1f(light + ".constant", 1.0f);
-		shader.SetUniform1f(light + ".linear", 0.09f);
-		shader.SetUniform1f(light + ".quadratic", 0.032f);
+	std::string light = "u_PointLights[0]";
 
-		shader.SetUniformVec3f("u_DirLight.direction", dirLight);
+	shader.SetUniformVec3f(light + ".position", lightPos);
+	shader.SetUniformVec3f(light + ".ambient", glm::vec3(0.5f, 0.5f, 0.5f));
+	shader.SetUniformVec3f(light + ".diffuse", glm::vec3(0.3f, 0.3f, 0.3f));
+	shader.SetUniformVec3f(light + ".specular", glm::vec3(0.3f, 0.3f, 0.3f));
+	shader.SetUniform1f(light + ".constant", 1.0f);
+	shader.SetUniform1f(light + ".linear", 0.09f);
+	shader.SetUniform1f(light + ".quadratic", 0.032f);
 
-		shader.SetUniformVec3f("u_SpotLights[0].position", camera.Position);
-		shader.SetUniformVec3f("u_SpotLights[0].direction", camera.Front);
-		shader.SetUniform3f("u_SpotLights[0].ambient", 0.0f, 0.0f, 0.0f);
-		shader.SetUniform3f("u_SpotLights[0].diffuse", 1.0f, 1.0f, 1.0f);
-		shader.SetUniform3f("u_SpotLights[0].specular", 1.0f, 1.0f, 1.0f);
-		shader.SetUniform1f("u_SpotLights[0].constant", 1.0f);
-		shader.SetUniform1f("u_SpotLights[0].linear", 0.09);
-		shader.SetUniform1f("u_SpotLights[0].quadratic", 0.032);
-		shader.SetUniform1f("u_SpotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
-		shader.SetUniform1f("u_SpotLights[0].outerCutOff", glm::cos(glm::radians(15.0f)));
+	shader.SetUniformVec3f("u_DirLight.direction", dirLight);
 
-		shader.SetUniformMat4f("u_Model", model);
-		shader.SetUniformMat4f("u_View", view);
-		shader.SetUniformMat4f("u_Projection", proj);
+	shader.SetUniformVec3f("u_SpotLights[0].position", camera.Position);
+	shader.SetUniformVec3f("u_SpotLights[0].direction", camera.Front);
+	shader.SetUniform3f("u_SpotLights[0].ambient", 0.0f, 0.0f, 0.0f);
+	shader.SetUniform3f("u_SpotLights[0].diffuse", 1.0f, 1.0f, 1.0f);
+	shader.SetUniform3f("u_SpotLights[0].specular", 1.0f, 1.0f, 1.0f);
+	shader.SetUniform1f("u_SpotLights[0].constant", 1.0f);
+	shader.SetUniform1f("u_SpotLights[0].linear", 0.09);
+	shader.SetUniform1f("u_SpotLights[0].quadratic", 0.032);
+	shader.SetUniform1f("u_SpotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
+	shader.SetUniform1f("u_SpotLights[0].outerCutOff", glm::cos(glm::radians(15.0f)));
 
-		shader.SetUniformVec3f("u_ViewPos", camera.Position);
+	shader.SetUniformMat4f("u_Model", model);
+	shader.SetUniformMat4f("u_View", view);
+	shader.SetUniformMat4f("u_Projection", proj);
 
-		renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
-	}
+	shader.SetUniformVec3f("u_ViewPos", camera.Position);
+
+	renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 }
 
 void WaterSurface::OnGUI()
@@ -259,20 +222,6 @@ void WaterSurface::OnGUI()
 
 		if (waveStrength < 0)
 			waveStrength = 0;
-
-		/*DIFFUSE TEXTURE*/
-		if (ImGui::Button(useDiffuseTexture ? "Using Diffuse Texture" : "Not using Diffuse Texture"))
-			useDiffuseTexture = !useDiffuseTexture;
-
-		if (useDiffuseTexture)
-			ImGui::InputText("Diffuse Map", diffuseTexture, 64);
-
-		/*SPECULAR TEXTURE*/
-		if (ImGui::Button(useSpecularTexture ? "Using Specular Texture" : "Not using Specular Texture"))
-			useSpecularTexture = !useSpecularTexture;
-
-		if (useSpecularTexture)
-			ImGui::InputText("Diffuse Map", specularTexture, 64);
 
 		/*DUDV MAP*/
 		if (ImGui::Button(useDuDvMap ? "Do Distortion" : "Do not Distortion"))

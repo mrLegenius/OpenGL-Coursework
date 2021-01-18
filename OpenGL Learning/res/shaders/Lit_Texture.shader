@@ -36,7 +36,7 @@ struct Material {
 	sampler2D specularMap;
 	int useEmissionMap;
 	sampler2D emissionMap;
-	int useNormalMap;
+	int u_UseNormalMap;
 	sampler2D normalMap;
 
 	float shininess;
@@ -97,7 +97,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
 	// properties
-	vec3 norm = normalize(u_Material.useNormalMap * vec3(texture(u_Material.normalMap, TexCoords)) - (u_Material.useNormalMap - 1) * Normal);
+	vec3 norm = normalize(u_Material.u_UseNormalMap * vec3(texture(u_Material.normalMap, TexCoords)) - (u_Material.u_UseNormalMap - 1) * Normal);
 	//vec3 norm = normalize(Normal);
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
 

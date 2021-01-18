@@ -38,13 +38,6 @@ struct Material {
 	vec3 diffuse;
 	vec3 specular;
 
-	int useDiffuseMap;
-	sampler2D diffuseMap;
-	int useSpecularMap;
-	sampler2D specularMap;
-	int useNormalMap;
-	sampler2D normalMap;
-
 	float shininess;
 };
 struct DirLight {
@@ -93,17 +86,20 @@ uniform Material u_Material;
 uniform DirLight u_DirLight;
 uniform SpotLight u_SpotLights[SPOT_LIGHTS_NUM];
 uniform PointLight u_PointLights[POINT_LIGHTS_NUM];
-uniform float transparency;
-uniform float reflectivity;
+
+uniform float u_WaveStrength;
+uniform float u_MoveFactor;
+uniform float u_Transparency;
+uniform float u_Reflectivity;
+
 uniform sampler2D reflectionTexture;
 uniform sampler2D refractionTexture;
 uniform sampler2D dudvMap;
 uniform sampler2D depthMap;
+uniform sampler2D normalMap;
 
-uniform float u_MoveFactor;
-
-uniform float waveStrength;
-uniform int useReflectionAndRefraction;
+uniform int u_UseReflectionAndRefraction;
+uniform int u_UseNormalMap;
 
 uniform int u_PointLightsCount;
 uniform int u_SpotLightsCount;
@@ -143,7 +139,7 @@ void main()
 
 	vec2 distortedTexCoords = texture(dudvMap, vec2(TexCoords.x + u_MoveFactor, TexCoords.y)).rg * 0.1;
 	distortedTexCoords = TexCoords + vec2(distortedTexCoords.x, distortedTexCoords.y + u_MoveFactor);
-	vec2 totalDistortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * waveStrength * clamp(waterDepth / 20.0f, 0.0, 1.0);
+	vec2 totalDistortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * u_WaveStrength * clamp(waterDepth / 20.0f, 0.0, 1.0);
 
 	reflectionTextureCoords += totalDistortion;
 	reflectionTextureCoords.x = clamp(reflectionTextureCoords.x, 0.001, 0.999);
@@ -154,13 +150,13 @@ void main()
 	refractionTextureCoords = clamp(refractionTextureCoords, 0.001, 0.999);
 	vec4 refractionColor = texture(refractionTexture, refractionTextureCoords);
 
-	vec4 normalMapColor = texture(u_Material.normalMap, distortedTexCoords);
+	vec4 normalMapColor = texture(normalMap, distortedTexCoords);
 
-	if (u_Material.useNormalMap)
+	if (u_UseNormalMap)
 		norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 3.0, normalMapColor.g * 2.0 - 1.0));
 
 	float refractionFactor = dot(-viewDir, norm) * 0.5 + 0.5;
-	refractionFactor = pow(refractionFactor, reflectivity);
+	refractionFactor = pow(refractionFactor, u_Reflectivity);
 	
 	// phase 1: Directional lighting
 	vec3 result = CalcDirLight(u_DirLight, norm, viewDir);
@@ -176,11 +172,11 @@ void main()
 
 	refractionColor = mix(refractionColor, vec4(result, 1.0), clamp01(map(waterDepth, -1000, 1000, 0.0, 1.0)));
 
-	if(useReflectionAndRefraction)
+	if(u_UseReflectionAndRefraction)
 		color = mix(reflectionColor, refractionColor, refractionFactor);
 
 	color += vec4(result, 0.0);
-	color.a = clamp(waterDepth / transparency, 0.0, 1.0);
+	color.a = clamp(waterDepth / u_Transparency, 0.0, 1.0);
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
@@ -192,9 +188,9 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Material.shininess);
 	// combine results
-	vec3 ambient = light.ambient * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.ambient);
-	vec3 diffuse = light.diffuse * diff * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.diffuse);
-	vec3 specular = light.specular * spec * (u_Material.useSpecularMap * vec3(texture(u_Material.specularMap, TexCoords)) - (u_Material.useSpecularMap - 1) * u_Material.specular);
+	vec3 ambient = light.ambient * u_Material.ambient;
+	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;
+	vec3 specular = light.specular * spec * u_Material.specular;
 
 	return (ambient + diffuse + specular);
 }
@@ -212,9 +208,9 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float attenuation = 1.0 / (light.constant + light.linear * distance +
 		light.quadratic * (distance * distance));
 	// combine results
-	vec3 ambient = light.ambient * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.ambient);
-	vec3 diffuse = light.diffuse * diff * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.diffuse);
-	vec3 specular = light.specular * spec * (u_Material.useSpecularMap * vec3(texture(u_Material.specularMap, TexCoords)) - (u_Material.useSpecularMap - 1) * u_Material.specular);
+	vec3 ambient = light.ambient * u_Material.ambient;
+	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;
+	vec3 specular = light.specular * spec * u_Material.specular;
 
 	ambient *= attenuation;
 	diffuse *= attenuation;
@@ -238,9 +234,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float epsilon = light.cutOff - light.outerCutOff;
 	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 	// combine results
-	vec3 ambient = light.ambient * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.ambient);
-	vec3 diffuse = light.diffuse * diff * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.diffuse);
-	vec3 specular = light.specular * spec * (u_Material.useSpecularMap * vec3(texture(u_Material.specularMap, TexCoords)) - (u_Material.useSpecularMap - 1) * u_Material.specular);
+	vec3 ambient = light.ambient * u_Material.ambient;
+	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;
+	vec3 specular = light.specular * spec * u_Material.specular;
 
 	ambient *= attenuation * intensity;
 	diffuse *= attenuation * intensity;

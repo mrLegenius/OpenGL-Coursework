@@ -32,15 +32,6 @@ struct Material {
 	vec3 diffuse;
 	vec3 specular;
 
-	int useDiffuseMap;
-	sampler2D diffuseMap;
-	int useSpecularMap;
-	sampler2D specularMap;
-	int useEmissionMap;
-	sampler2D emissionMap;
-	int useNormalMap;
-	sampler2D normalMap;
-
 	float shininess;
 };
 struct DirLight {
@@ -98,14 +89,13 @@ uniform sampler2D middleTexture;
 uniform sampler2D beachTexture;
 uniform sampler2D deepTexture;
 uniform sampler2D heightMap;
+uniform sampler2D normalMap;
 
 uniform float peakHeight;
 uniform float mountainHeight;
 uniform float middleHeight;
 uniform float beachHeight;
 uniform float deepHeight;
-
-uniform float heightTexture;
 
 uniform float u_Tiling;
 
@@ -127,7 +117,6 @@ void main()
 {
 	vec2 tiledTexCoords = TexCoords * u_Tiling;
 	float height = texture(heightMap, TexCoords).r;
-	//float height = heightTexture;
 	float peak = clamp01(map(height, mountainHeight, peakHeight, 0, 1));
 	float mountain = clamp01(map(height, middleHeight, mountainHeight, 0, 1));
 	mountain -= clamp01(map(height, mountainHeight, peakHeight, 0, 1));
@@ -146,8 +135,11 @@ void main()
 	vec4 landColor = peakColor + mountainColor + middleColor + beachColor + deepColor;
 
 	// properties
-	vec3 norm = normalize(u_Material.useNormalMap * vec3(texture(u_Material.normalMap, TexCoords)) - (u_Material.useNormalMap - 1) * Normal);
-	//vec3 norm = normalize(Normal);
+	vec3 norm = normalize(Normal);
+	vec4 normalMapColor = texture(normalMap, TexCoords);
+
+	norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 2.0 - 1.0, normalMapColor.g * 2.0 - 1.0));
+	
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
 
 	// phase 1: Directional lighting
@@ -160,9 +152,8 @@ void main()
 	for (int i = 0; i < u_SpotLightsCount; i++)
 		result += CalcSpotLight(u_SpotLights[i], norm, FragPos, viewDir);
 
-
 	color = landColor;
-	//color += vec4(result, 0.0);
+	color += vec4(result, 0.0);
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
@@ -174,9 +165,9 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Material.shininess);
 	// combine results
-	vec3 ambient = light.ambient * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.ambient);
-	vec3 diffuse = light.diffuse * diff * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.diffuse);
-	vec3 specular = light.specular * spec * (u_Material.useSpecularMap * vec3(texture(u_Material.specularMap, TexCoords)) - (u_Material.useSpecularMap - 1) * u_Material.specular);
+	vec3 ambient = light.ambient * u_Material.ambient;
+	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;
+	vec3 specular = light.specular * spec * u_Material.specular;
 
 	return (ambient + diffuse + specular);
 }
@@ -194,9 +185,9 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float attenuation = 1.0 / (light.constant + light.linear * distance +
 		light.quadratic * (distance * distance));
 	// combine results
-	vec3 ambient = light.ambient * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.ambient);
-	vec3 diffuse = light.diffuse * diff * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.diffuse);
-	vec3 specular = light.specular * spec * (u_Material.useSpecularMap * vec3(texture(u_Material.specularMap, TexCoords)) - (u_Material.useSpecularMap - 1) * u_Material.specular);
+	vec3 ambient = light.ambient * u_Material.ambient;
+	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;
+	vec3 specular = light.specular * spec * u_Material.specular;
 
 	ambient *= attenuation;
 	diffuse *= attenuation;
@@ -220,9 +211,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	float epsilon = light.cutOff - light.outerCutOff;
 	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 	// combine results
-	vec3 ambient = light.ambient * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.ambient);
-	vec3 diffuse = light.diffuse * diff * (u_Material.useDiffuseMap * vec3(texture(u_Material.diffuseMap, TexCoords)) - (u_Material.useDiffuseMap - 1) * u_Material.diffuse);
-	vec3 specular = light.specular * spec * (u_Material.useSpecularMap * vec3(texture(u_Material.specularMap, TexCoords)) - (u_Material.useSpecularMap - 1) * u_Material.specular);
+	vec3 ambient = light.ambient * u_Material.ambient;
+	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;
+	vec3 specular = light.specular * spec * u_Material.specular;
 
 	ambient *= attenuation * intensity;
 	diffuse *= attenuation * intensity;
