@@ -60,7 +60,7 @@ public:
 
 				vertices.push_back(0);
 				vertices.push_back(0);
-				vertices.push_back(1);
+				vertices.push_back(-1);
 
 				vertices.push_back(i * size);
 				vertices.push_back(j * size);

@@ -72,6 +72,8 @@ std::shared_ptr<Shape3D> LandscapeGenerator::Generate(std::shared_ptr<Texture> h
 			vertices.push_back(1);
 
 			//texture coords
+			//vertices.push_back(x);
+			//vertices.push_back(y);
 			vertices.push_back(x / (float)width);
 			vertices.push_back(y / (float)height);
 

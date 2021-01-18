@@ -13,13 +13,14 @@ uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 uniform vec4 u_Plane;
+uniform float u_Tiling;
 
 void main()
 {
 	gl_ClipDistance[0] = dot(vec4(position, 1.0), u_Plane);
 	FragPos = vec3(u_Model * vec4(position, 1.0));
 	Normal = mat3(transpose(inverse(u_Model))) * normal;
-	TexCoords = texCoords;
+	TexCoords = texCoords * u_Tiling;
 
 	gl_Position = u_Projection * u_View * vec4(FragPos, 1.0);
 };

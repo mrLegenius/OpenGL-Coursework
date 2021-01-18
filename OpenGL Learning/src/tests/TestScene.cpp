@@ -22,44 +22,6 @@ namespace test
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 		
 		auto& settings = Settings::GetInstance();
-		//FrameBuffer
-
-		m_BufferObject = Shape3D::CreatePlane(100);
-		m_FrameBuffer = std::make_shared<FrameBuffer>();
-		m_BufferTexture = std::make_shared<Texture>(settings.screenWidth, settings.screenHeight);
-		m_RenderBuffer = std::make_shared<RenderBuffer>(settings.screenWidth, settings.screenHeight);
-
-		m_FrameBuffer->AttachTexture(m_BufferTexture->GetID());
-		m_FrameBuffer->AttachRenderBuffer(m_RenderBuffer->GetID());
-
-		if (!m_FrameBuffer->IsComplete())
-			std::cout << "Frame buffer is not completed!" << std::endl;
-
-		m_FrameBuffer->Unbind();
-
-		m_ReflectionBuffer = std::make_shared<FrameBuffer>();
-		m_ReflectionTexture = std::make_shared<Texture>(settings.screenWidth, settings.screenHeight);
-		m_ReflectionRenderBuffer = std::make_shared<RenderBuffer>(settings.screenWidth, settings.screenHeight);
-
-		m_ReflectionBuffer->AttachTexture(m_ReflectionTexture->GetID());
-		m_ReflectionBuffer->AttachRenderBuffer(m_ReflectionRenderBuffer->GetID());
-
-		if (!m_ReflectionBuffer->IsComplete())
-			std::cout << "Reflection Frame buffer is not completed!" << std::endl;
-
-		m_ReflectionBuffer->Unbind();
-
-		m_RefractionBuffer = std::make_shared<FrameBuffer>();
-		m_RefractionTexture = std::make_shared<Texture>(settings.screenWidth, settings.screenHeight);
-		m_RefractionDepthTexture = std::make_shared<Texture>(settings.screenWidth, settings.screenHeight, GL_DEPTH_COMPONENT);
-
-		m_RefractionBuffer->AttachTexture(m_RefractionTexture->GetID());
-		m_RefractionBuffer->AttachDepthTexture(m_RefractionDepthTexture->GetID());
-
-		if (!m_RefractionBuffer->IsComplete())
-			std::cout << "Refraction Frame buffer is not completed!" << std::endl;
-
-		m_RefractionBuffer->Unbind();
 
 		//SKYBOX
 
@@ -81,31 +43,22 @@ namespace test
 		m_SkyboxShader->SetUniform1i("u_SkyboxTexture", 0);
 
 		//WATER
-		m_Water = Shape3D::CreatePlane(100);
-		m_WaterShader = std::make_unique<Shader>("res/shaders/Lit_Water.shader");
-		m_WaterTexture = std::make_shared<Texture>("res/textures/Water.jpg");
-		m_WaterDistortion = std::make_shared<Texture>("res/textures/DuDv_Water_Map.png");
-		m_WaterNormalMap = std::make_shared<Texture>("res/textures/Normal_Water_Map.png");
-		m_WaterShader->Bind();
-		m_WaterShader->SetUniform3f("u_DirLight.ambient", 0.05f, 0.05f, 0.05f);
-		m_WaterShader->SetUniform3f("u_DirLight.diffuse", 0.4f, 0.4f, 0.4f);
-		m_WaterShader->SetUniform3f("u_DirLight.specular", 0.5f, 0.5f, 0.5f);
+		water.transform.eulerAngles.x = 90;
+		water.transform.scale.x = landScale.x * quality;
+		water.transform.scale.y = landScale.z * quality;
 
-		m_WaterShader->SetUniform1i("u_Material.useDiffuseMap", 0);
-		m_WaterShader->SetUniform1i("u_Material.useSpecularMap", 0);
-		m_WaterShader->SetUniform1i("u_Material.useNormalMap", 1);
+		water.SetResolution(100);
 
-		m_WaterShader->SetUniform1i("u_Material.diffuseMap", 0);
-		m_WaterShader->SetUniform1i("u_Material.specularMap", 1);
-		m_WaterShader->SetUniform1i("u_Material.normalMap", 2);
-		m_WaterShader->SetUniform1i("reflectionTexture", 3);
-		m_WaterShader->SetUniform1i("refractionTexture", 4);
-		m_WaterShader->SetUniform1i("dudvMap", 5);
-		m_WaterShader->SetUniform1i("depthMap", 6);
+		water.SetDiffuseTexture("res/textures/Water.jpg");
+		water.SetDuDvMap("res/textures/DuDv_Water_Map.png");
+		water.SetNormalMap("res/textures/Normal_Water_Map.png");
+		
+		water.useDuDvMap = true;
+		water.useNormalMap = true;
+		water.useDiffuseTexture = true;
 
-		m_WaterShader->SetUniform1i("u_PointLightsCount", 1);
-		m_WaterShader->SetUniform1i("u_SpotLightsCount", 1);
-
+		water.UpdateData();
+		
 		//MAIN OBJECT		
 		m_Object = Shape3D::CreateCube();
 		m_DiffuseTexture = std::make_shared<Texture>("res/textures/Dark-Green-Grass.jpg");
@@ -156,8 +109,7 @@ namespace test
 
 	void test::TestScene::OnUpdate(float deltaTime)
 	{
-		waterMoveFactor += WATER_SPEED * deltaTime;
-		waterMoveFactor = glm::fract(waterMoveFactor);
+		water.OnUpdate(deltaTime);
 
 		auto& input = Input::GetInstance();
 
@@ -216,48 +168,51 @@ namespace test
 
 	void test::TestScene::OnRender()
 	{
-		/*REFLECTION RENDER*/
 		GLCall(glClearColor(0.06f, 0.02f, 0.13f, 1.0f));
 		GLCall(glEnable(GL_CLIP_DISTANCE0));
 		Renderer renderer;
-		m_ReflectionBuffer->Bind();
-		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		
-		float distance = 2 * (m_Camera->Position.y - waterHeight);
-		m_Camera->Position.y -= distance;
-		
-		m_Camera->Pitch += 180.0f;
-		m_Camera->Yaw += 180.0f;
-		m_Camera->FollowMouse(0, 0, false);
-		RenderScene(renderer, glm::vec4(0, 1, 0, -waterHeight*10));
-		//RenderSkybox(renderer);
-		m_Camera->Position.y += distance;
-		m_Camera->Pitch -= 180.0f;
-		m_Camera->Yaw -= 180.0f;
-		
-		m_Camera->FollowMouse(0, 0, true);
+			
+		if (water.useReflectionAndRefraction)
+		{
+			/*REFLECTION RENDER*/
+			water.StartReflectionRender();
+			float waterHeight = water.transform.position.y;
+			float distance = 2 * (m_Camera->Position.y - waterHeight);
 
-		/*REFRACTION RENDER*/
-		m_RefractionBuffer->Bind();
-		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+			m_Camera->Position.y -= distance;
+			m_Camera->Pitch += 180.0f;
+			m_Camera->Yaw += 180.0f;
+			m_Camera->FollowMouse(0, 0, false);
 
-		RenderScene(renderer, glm::vec4(0, -1, 0, waterHeight*10));
-		//RenderSkybox(renderer);
-		m_RefractionBuffer->Unbind();
+			RenderScene(renderer, glm::vec4(0, 1, 0, -waterHeight*10));
+			RenderSkybox(renderer);
 
+			m_Camera->Position.y += distance;
+			m_Camera->Pitch -= 180.0f;
+			m_Camera->Yaw -= 180.0f;
+			m_Camera->FollowMouse(0, 0, true);
+
+			/*REFRACTION RENDER*/
+			water.StartRefractionRender();
+			RenderScene(renderer, glm::vec4(0, -1, 0, waterHeight * 10));
+			RenderSkybox(renderer);
+			water.FinishRefractionRender();
+		}
+		
 		/*SCENE RENDER*/
 		GLCall(glDisable(GL_CLIP_DISTANCE0));
 		GLCall(glClearColor(0.06f, 0.02f, 0.13f, 1.0f));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		//m_Camera->InversePitch();
 		RenderScene(renderer);
-		RenderWater(renderer);
+		water.OnRender(renderer, *m_Camera, dirLight, m_LightPos);
 		RenderSkybox(renderer);
 		RenderTestTextures(renderer);
 	}
 
 	void test::TestScene::OnImGuiRender()
 	{
+		water.OnGUI();
+
 		if (ImGui::Button(polygoneModeFill ? "Polygon Mode = Fill" : "Polygon Mode = Line"))
 		{
 			polygoneModeFill = !polygoneModeFill;
@@ -278,8 +233,6 @@ namespace test
 
 		ImGui::InputFloat3("Light Pos", &m_LightPos[0]);
 		ImGui::SliderFloat3("Dir Light", &dirLight[0], -glm::pi<float>(), glm::pi<float>());
-		ImGui::InputFloat("Water Height", &waterHeight);
-		ImGui::InputFloat("Water Transparency", &waterTransparency);
 
 		ImGui::Text("---------------");
 		ImGui::Text("Land Generation");
@@ -352,6 +305,7 @@ namespace test
 
 			Materials::SetBlackRubber(shader);
 
+			shader.SetUniform1f("u_Tiling", 20.0f);
 			//shader.SetUniform1f("iTime", glfwGetTime());
 
 			std::string light = "u_PointLights[0]";
@@ -413,69 +367,11 @@ namespace test
 			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 			model = glm::scale(model, glm::vec3(1, 1, 1));
 			shader.Bind();
-			shader.SetUniformMat4f("u_Model", model);
+			//shader.SetUniformMat4f("u_Model", model);
 			shader.SetUniformMat4f("u_View", glm::mat4(glm::mat3(m_View)));
 			shader.SetUniformMat4f("u_Projection", m_Proj);
 			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 			GLCall(glDepthFunc(GL_LESS));
-		}
-	}
-	void TestScene::RenderWater(Renderer renderer)
-	{
-		m_WaterTexture->Bind();
-		m_WaterNormalMap->Bind(2);
-		m_ReflectionTexture->Bind(3);
-		m_RefractionTexture->Bind(4);
-		m_WaterDistortion->Bind(5);
-		m_RefractionDepthTexture->Bind(6);
-		{
-			auto& object = *m_Water;
-			auto& shader = *m_WaterShader;
-			//waterHeight = 0.04f * height + landPos.y;
-			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(landPos.x, waterHeight, landPos.z));
-			model = glm::rotate(model, glm::half_pi<float>(), glm::vec3(1.0f, 0, 0));
-			glm::vec3 scale = landScale * quality;
-			scale.z = 1.0f;
-			model = glm::scale(model, scale);
-			shader.Bind();
-
-			Materials::SetTurquoise(shader);
-
-			shader.SetUniform1f("u_Time", glfwGetTime());
-			shader.SetUniform1f("u_MoveFactor", waterMoveFactor);
-
-			shader.SetUniform1f("transparency", waterTransparency);
-
-			std::string light = "u_PointLights[0]";
-
-			shader.SetUniformVec3f(light + ".position", m_LightPos);
-			shader.SetUniformVec3f(light + ".ambient", glm::vec3(0.5f, 0.5f, 0.5f));
-			shader.SetUniformVec3f(light + ".diffuse", glm::vec3(0.3f, 0.3f, 0.3f));
-			shader.SetUniformVec3f(light + ".specular", glm::vec3(0.3f, 0.3f, 0.3f));
-			shader.SetUniform1f(light + ".constant", 1.0f);
-			shader.SetUniform1f(light + ".linear", 0.09f);
-			shader.SetUniform1f(light + ".quadratic", 0.032f);
-
-			shader.SetUniformVec3f("u_DirLight.direction", dirLight);
-
-			shader.SetUniformVec3f("u_SpotLights[0].position", m_Camera->Position);
-			shader.SetUniformVec3f("u_SpotLights[0].direction", m_Camera->Front);
-			shader.SetUniform3f("u_SpotLights[0].ambient", 0.0f, 0.0f, 0.0f);
-			shader.SetUniform3f("u_SpotLights[0].diffuse", 1.0f, 1.0f, 1.0f);
-			shader.SetUniform3f("u_SpotLights[0].specular", 1.0f, 1.0f, 1.0f);
-			shader.SetUniform1f("u_SpotLights[0].constant", 1.0f);
-			shader.SetUniform1f("u_SpotLights[0].linear", 0.09);
-			shader.SetUniform1f("u_SpotLights[0].quadratic", 0.032);
-			shader.SetUniform1f("u_SpotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
-			shader.SetUniform1f("u_SpotLights[0].outerCutOff", glm::cos(glm::radians(15.0f)));
-
-			shader.SetUniformMat4f("u_Model", model);
-			shader.SetUniformMat4f("u_View", m_View);
-			shader.SetUniformMat4f("u_Projection", m_Proj);
-
-			shader.SetUniformVec3f("u_ViewPos", m_Camera->Position);
-
-			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 		}
 	}
 	void TestScene::RenderTestTextures(Renderer renderer)
@@ -549,48 +445,6 @@ namespace test
 			shader.SetUniformMat4f("u_Projection", m_Proj);
 			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 		}
-
-		m_ReflectionTexture->Bind();
-		{
-			auto& object = *m_BufferObject;
-			auto& shader = *m_TestShader;
-			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 2, -10));//glm::vec3(5, 5, 0));
-			model = glm::scale(model, glm::vec3(2.0f, 2.0f, 2.0f));
-			shader.Bind();
-			shader.SetUniformMat4f("u_Model", model);
-			shader.SetUniformMat4f("u_View", m_View);
-			shader.SetUniformMat4f("u_Projection", m_Proj);
-			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
-		}
-
-		m_RefractionTexture->Bind();
-		{
-			auto& object = *m_BufferObject;
-			auto& shader = *m_TestShader;
-			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(6, 5, 0));
-			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-			shader.Bind();
-			shader.SetUniformMat4f("u_Model", model);
-			shader.SetUniformMat4f("u_View", m_View);
-			shader.SetUniformMat4f("u_Projection", m_Proj);
-			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
-		}
-
-		m_WaterDistortion->Bind();
-		{
-			auto& object = *m_BufferObject;
-			auto& shader = *m_TestShader;
-			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(7, 5, 0));
-			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-			shader.Bind();
-			shader.SetUniformMat4f("u_Model", model);
-			shader.SetUniformMat4f("u_View", m_View);
-			shader.SetUniformMat4f("u_Projection", m_Proj);
-			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
-		}
 	}
 	void TestScene::GenerateLand()
 	{
@@ -599,6 +453,6 @@ namespace test
 		m_TestNormalTexture = TextureGenerator::GenerateNormalMapFromTexture(m_CookiedHeightMapTexture);
 		m_ColoredHeightTexture = TextureGenerator::GenerateColoredHeightMap(m_CookiedHeightMapTexture);
 		m_Object = LandscapeGenerator::Generate(m_CookiedHeightMapTexture, height);
-		waterHeight = 0.04f * height + landPos.y;
+		water.transform.position.y = 0.04f * height + landPos.y;
 	}
 }

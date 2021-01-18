@@ -16,59 +16,19 @@ uniform mat4 u_Projection;
 
 uniform vec4 u_Plane;
 
+uniform float u_Tiling;
 uniform float u_Time;
-
-vec4 permute(vec4 x);
-vec2 fade(vec2 t);
-float cnoise(vec2 P);
 
 void main()
 {
-	vec4 newPos = vec4(position.x, position.y, cnoise(position.xy * sin(u_Time)), 1.0f);
-	newPos = vec4(position, 1.0);
-	gl_ClipDistance[0] = dot(newPos, u_Plane);
-	FragPos = vec3(u_Model * newPos);
+	gl_ClipDistance[0] = dot(vec4(position, 1.0), u_Plane);
+	FragPos = vec3(u_Model * vec4(position, 1.0));
 	Normal = mat3(transpose(inverse(u_Model))) * normal;
-	TexCoords = texCoords;
+	TexCoords = texCoords * u_Tiling;
 
 	ClipSpace = u_Projection * u_View * vec4(FragPos, 1.0);
 	gl_Position = ClipSpace;
 };
-vec4 permute(vec4 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
-vec2 fade(vec2 t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
-
-float cnoise(vec2 P) {
-	vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
-	vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
-	Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
-	vec4 ix = Pi.xzxz;
-	vec4 iy = Pi.yyww;
-	vec4 fx = Pf.xzxz;
-	vec4 fy = Pf.yyww;
-	vec4 i = permute(permute(ix) + iy);
-	vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
-	vec4 gy = abs(gx) - 0.5;
-	vec4 tx = floor(gx + 0.5);
-	gx = gx - tx;
-	vec2 g00 = vec2(gx.x, gy.x);
-	vec2 g10 = vec2(gx.y, gy.y);
-	vec2 g01 = vec2(gx.z, gy.z);
-	vec2 g11 = vec2(gx.w, gy.w);
-	vec4 norm = 1.79284291400159 - 0.85373472095314 *
-		vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
-	g00 *= norm.x;
-	g01 *= norm.y;
-	g10 *= norm.z;
-	g11 *= norm.w;
-	float n00 = dot(g00, vec2(fx.x, fy.x));
-	float n10 = dot(g10, vec2(fx.y, fy.y));
-	float n01 = dot(g01, vec2(fx.z, fy.z));
-	float n11 = dot(g11, vec2(fx.w, fy.w));
-	vec2 fade_xy = fade(Pf.xy);
-	vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
-	float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
-	return 2.3 * n_xy;
-}
 
 #shader fragment
 #version 330 core
@@ -134,6 +94,7 @@ uniform DirLight u_DirLight;
 uniform SpotLight u_SpotLights[SPOT_LIGHTS_NUM];
 uniform PointLight u_PointLights[POINT_LIGHTS_NUM];
 uniform float transparency;
+uniform float reflectivity;
 uniform sampler2D reflectionTexture;
 uniform sampler2D refractionTexture;
 uniform sampler2D dudvMap;
@@ -141,7 +102,8 @@ uniform sampler2D depthMap;
 
 uniform float u_MoveFactor;
 
-const float waveStrength = 0.04;
+uniform float waveStrength;
+uniform int useReflectionAndRefraction;
 
 uniform int u_PointLightsCount;
 uniform int u_SpotLightsCount;
@@ -153,11 +115,8 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 void main()
 {
 	// properties
-	//vec3 norm = normalize(u_Material.useNormalMap * vec3(texture(u_Material.normalMap, TexCoords)) - (u_Material.useNormalMap - 1) * Normal);
 	vec3 norm = normalize(Normal);
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
-
-	
 
 	vec2 ndc = (ClipSpace.xy / ClipSpace.w) / 2.0 + 0.5f;
 
@@ -173,15 +132,11 @@ void main()
 	float waterDistance = 2.0 * near * far / (far + near - (2.0 * depth - 1.0) * (far - near));
 
 	float waterDepth = floorDistance - waterDistance;
-	//vec2 distortion1 = (texture(dudvMap, vec2(TexCoords.x + u_MoveFactor, TexCoords.y)).rg * 2.0 - 1.0) * waveStrength;
-	//vec2 distortion2 = (texture(dudvMap, vec2(-TexCoords.x + u_MoveFactor, TexCoords.y + u_MoveFactor)).rg * 2.0 - 1.0) * waveStrength;
-	//vec2 totalDistortion = distortion1 + distortion2;
 
 	vec2 distortedTexCoords = texture(dudvMap, vec2(TexCoords.x + u_MoveFactor, TexCoords.y)).rg * 0.1;
 	distortedTexCoords = TexCoords + vec2(distortedTexCoords.x, distortedTexCoords.y + u_MoveFactor);
 	vec2 totalDistortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * waveStrength * clamp(waterDepth / 20.0f, 0.0, 1.0);
 
-	
 	reflectionTextureCoords += totalDistortion;
 	reflectionTextureCoords.x = clamp(reflectionTextureCoords.x, 0.001, 0.999);
 	reflectionTextureCoords.y = clamp(reflectionTextureCoords.y, -0.999, -0.001);
@@ -196,9 +151,8 @@ void main()
 	if (u_Material.useNormalMap)
 		norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 3.0, normalMapColor.g * 2.0 - 1.0));
 
-	float refractionFactor = dot(-viewDir, norm);
-	refractionFactor = pow(refractionFactor, 2.0f);
-
+	float refractionFactor = dot(-viewDir, norm) * 0.5 + 0.5;
+	refractionFactor = pow(refractionFactor, reflectivity);
 	
 	// phase 1: Directional lighting
 	vec3 result = CalcDirLight(u_DirLight, norm, viewDir);
@@ -212,7 +166,9 @@ void main()
 
 	result *= clamp(waterDepth / 5.0, 0.0, 1.0);
 
-	color = mix(reflectionColor, refractionColor, refractionFactor);
+	if(useReflectionAndRefraction)
+		color = mix(reflectionColor, refractionColor, refractionFactor);
+
 	color += vec4(result, 0.0);
 	color.a = clamp(waterDepth / transparency, 0.0, 1.0);
 }

@@ -18,6 +18,8 @@
 
 #include <memory>
 
+#include "WaterSurface.h"
+
 namespace test
 {
 	class TestScene : public Test
@@ -30,14 +32,13 @@ namespace test
 		void OnRender() override;
 		void OnImGuiRender() override;
 	private:
-		void RenderWater(Renderer renderer);
 		void RenderTestTextures(Renderer renderer);
 		void RenderScene(Renderer renderer, glm::vec4 clippingPlane = glm::vec4(0));
 		void RenderSkybox(Renderer renderer);
 		void GenerateLand();
 
-		float waterTransparency = 10.0f;
-		float waterMoveFactor;
+		WaterSurface water;
+
 
 		glm::vec3 landScale = glm::vec3(0.1);
 		glm::vec3 landPos;
@@ -55,21 +56,6 @@ namespace test
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
 
-		float waterHeight;
-
-		std::shared_ptr<Shape3D> m_BufferObject;
-		std::shared_ptr<FrameBuffer> m_FrameBuffer;
-		std::shared_ptr<RenderBuffer> m_RenderBuffer;
-		std::shared_ptr<Texture> m_BufferTexture;
-
-		std::shared_ptr<FrameBuffer> m_ReflectionBuffer;
-		std::shared_ptr<RenderBuffer> m_ReflectionRenderBuffer;
-		std::shared_ptr<Texture> m_ReflectionTexture;
-
-		std::shared_ptr<FrameBuffer> m_RefractionBuffer;
-		std::shared_ptr<Texture> m_RefractionTexture;
-		std::shared_ptr<Texture> m_RefractionDepthTexture;
-
 		std::shared_ptr<Shape3D> m_Skybox;
 		std::shared_ptr<Texture> m_SkyboxTexture;
 		std::shared_ptr<Shader> m_SkyboxShader;
@@ -85,7 +71,6 @@ namespace test
 		std::shared_ptr<Shape3D> m_Object;
 		std::shared_ptr<Shape3D> m_LightSource;
 		
-
 		glm::vec3 m_LightPos;
 
 		std::unique_ptr<Shader> m_ObjectShader;

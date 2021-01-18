@@ -7,27 +7,6 @@ Texture::Texture(const std::string & path) : m_FilePath(path)
 	stbi_set_flip_vertically_on_load(1);
 
 	m_LocalBuffer = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, 4);
-	/*
-	int i = 0;
-	for(; i < m_Width * m_Height; i+=4)
-	{ 
-		std::cout << "r = " << (int)m_LocalBuffer[i] << " ";
-		std::cout << "g = " << (int)m_LocalBuffer[i+1] << " ";
-		std::cout << "b = " << (int)m_LocalBuffer[i+2] << " ";
-		std::cout << "a = " << (int)m_LocalBuffer[i+3] << " ";
-		std::cout << std::endl;
-	}
-	std::cout << "Out of color" << std::endl;
-	for (; i < 100; i += 4)
-	{
-		
-		std::cout << "r = " << (int)m_LocalBuffer[i] << " ";
-		std::cout << "g = " << (int)m_LocalBuffer[i + 1] << " ";
-		std::cout << "b = " << (int)m_LocalBuffer[i + 2] << " ";
-		std::cout << "a = " << (int)m_LocalBuffer[i + 3] << " ";
-		std::cout << std::endl;
-	}*/
-
 
 	GLCall(glGenTextures(1, &m_RendererID));
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_RendererID));

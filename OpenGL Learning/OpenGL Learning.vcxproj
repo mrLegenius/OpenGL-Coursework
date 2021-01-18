@@ -149,6 +149,8 @@
     <ClCompile Include="src\VertexArray.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
     <ClCompile Include="src\TextureGenerator.cpp" />
+    <ClCompile Include="src\Transform.cpp" />
+    <ClCompile Include="src\WaterSurface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Lit_Color.shader" />
@@ -607,6 +609,8 @@
     <ClInclude Include="src\VertexBuffer.h" />
     <ClInclude Include="src\VertexBufferLayout.h" />
     <ClInclude Include="src\TextureGenerator.h" />
+    <ClInclude Include="src\Transform.h" />
+    <ClInclude Include="src\WaterSurface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
