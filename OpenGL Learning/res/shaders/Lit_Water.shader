@@ -111,7 +111,15 @@ uniform int u_SpotLightsCount;
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-
+float map(float value, float min1, float max1, float min2, float max2) {
+	return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+float map01(float value, float min1, float max1) {
+	return map(value, min1, max1, 0.0, 1.0);
+}
+float clamp01(float value) {
+	return clamp(value, 0, 1);
+}
 void main()
 {
 	// properties
@@ -165,6 +173,8 @@ void main()
 		result += CalcSpotLight(u_SpotLights[i], norm, FragPos, viewDir);
 
 	result *= clamp(waterDepth / 5.0, 0.0, 1.0);
+
+	refractionColor = mix(refractionColor, vec4(result, 1.0), clamp01(map(waterDepth, -1000, 1000, 0.0, 1.0)));
 
 	if(useReflectionAndRefraction)
 		color = mix(reflectionColor, refractionColor, refractionFactor);
