@@ -125,6 +125,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Land.cpp" />
+    <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\RenderBuffer.cpp" />
     <ClCompile Include="src\FrameBuffer.cpp" />
     <ClCompile Include="src\Shape3D.cpp" />
@@ -297,6 +299,8 @@
     <None Include="src\vendor\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Land.h" />
+    <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\RenderBuffer.h" />
     <ClInclude Include="src\FrameBuffer.h" />
     <ClInclude Include="src\Shape3D.h" />

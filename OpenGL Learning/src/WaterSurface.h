@@ -13,13 +13,14 @@
 
 #include "Camera.h"
 
+#include "Material.h"
+
 class WaterSurface
 {
 private:
 	std::string prev_dudvMap;
 	std::string prev_normalMap;
 	unsigned int prev_resolution = 0;
-
 
 	int resolution = 100;
 	float tiling = 10;
@@ -33,6 +34,8 @@ private:
 
 	char dudvMap[64];
 	char normalMap[64];
+
+	Material material;
 
 	std::shared_ptr<FrameBuffer> m_ReflectionBuffer;
 	std::shared_ptr<RenderBuffer> m_ReflectionRenderBuffer;
@@ -59,6 +62,7 @@ public:
 	bool useDepth = true;
 
 	WaterSurface();
+	~WaterSurface();
 
 	void SetResolution(unsigned int value);
 	void SetDuDvMap(const std::string& path);

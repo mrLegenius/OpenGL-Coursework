@@ -1,6 +1,5 @@
 #include "WaterSurface.h"
 #include "Settings.h"
-#include "Materials.h"
 
 WaterSurface::WaterSurface()
 {
@@ -50,6 +49,11 @@ WaterSurface::WaterSurface()
 	m_RefractionBuffer->Unbind();
 
 	UpdateData();
+}
+
+WaterSurface::~WaterSurface()
+{
+	m_WaterShader->Unbind();
 }
 
 void WaterSurface::SetResolution(unsigned int value)
@@ -112,16 +116,6 @@ void WaterSurface::UpdateData()
 		m_Plane = Shape3D::CreatePlane(resolution);
 		prev_resolution = resolution;
 	}
-	m_WaterShader->Bind();
-	m_WaterShader->SetUniform1i("useDuDvMap", (int)useDuDvMap);
-	m_WaterShader->SetUniform1i("u_UseNormalMap", (int)useNormalMap);
-	m_WaterShader->SetUniform1i("u_UseReflectionAndRefraction", (int)useReflectionAndRefraction);
-	m_WaterShader->SetUniform1i("useDepth", (int)useDepth);
-
-	m_WaterShader->SetUniform1f("u_Tiling", tiling);
-	m_WaterShader->SetUniform1f("u_Transparency", transparency);
-	m_WaterShader->SetUniform1f("u_Reflectivity", reflectivity);
-	m_WaterShader->SetUniform1f("u_WaveStrength", waveStrength);
 }
 
 void WaterSurface::OnUpdate(float deltaTime)
@@ -151,9 +145,20 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLigh
 	
 	shader.Bind();
 
-	Materials::SetTurquoise(shader);
+	material.SetTo(shader);
 
-	shader.SetUniform1f("u_Time", glfwGetTime());
+	m_WaterShader->Bind();
+	m_WaterShader->SetUniform1i("useDuDvMap", (int)useDuDvMap);
+	m_WaterShader->SetUniform1i("u_UseNormalMap", (int)useNormalMap);
+	m_WaterShader->SetUniform1i("u_UseReflectionAndRefraction", (int)useReflectionAndRefraction);
+
+	m_WaterShader->SetUniform1f("u_Tiling", tiling);
+	m_WaterShader->SetUniform1f("u_Transparency", transparency);
+	m_WaterShader->SetUniform1f("u_Reflectivity", reflectivity);
+	m_WaterShader->SetUniform1f("u_WaveStrength", waveStrength);
+	m_WaterShader->SetUniform1i("u_UseDepthTesting", useDepth);
+
+	shader.SetUniform1f("u_Time", (float)glfwGetTime());
 	shader.SetUniform1f("u_MoveFactor", moveFactor);
 
 	std::string light = "u_PointLights[0]";
@@ -186,6 +191,7 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLigh
 	shader.SetUniformVec3f("u_ViewPos", camera.Position);
 
 	renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
+
 }
 
 void WaterSurface::OnGUI()
@@ -197,8 +203,8 @@ void WaterSurface::OnGUI()
 		/*MAIN SETTINGS*/
 		//Size and Texturing
 		ImGui::DragInt("Resolution", &resolution, 1.0f);
-		if (resolution < 0)
-			resolution = 0;
+		if (resolution < 1)
+			resolution = 1;
 
 		ImGui::DragFloat("Tiling", &tiling);
 
@@ -223,6 +229,7 @@ void WaterSurface::OnGUI()
 		if (waveStrength < 0)
 			waveStrength = 0;
 
+		material.OnGUI();
 		/*DUDV MAP*/
 		if (ImGui::Button(useDuDvMap ? "Do Distortion" : "Do not Distortion"))
 			useDuDvMap = !useDuDvMap;

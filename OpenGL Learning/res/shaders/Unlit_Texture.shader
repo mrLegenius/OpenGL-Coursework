@@ -11,10 +11,14 @@ uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 
+uniform float u_Tiling;
+uniform vec4 u_Plane;
+
 void main()
 {
+	gl_ClipDistance[0] = dot(vec4(position, 1.0), u_Plane);
 	gl_Position = u_Projection * u_View * u_Model * vec4(position, 1.0f);
-	v_TexCoord = texCoord;
+	v_TexCoord = texCoord * u_Tiling;
 };
 
 #shader fragment

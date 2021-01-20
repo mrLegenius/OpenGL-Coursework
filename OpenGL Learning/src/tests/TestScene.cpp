@@ -12,7 +12,7 @@ namespace test
 {
 	test::TestScene::TestScene() : m_LightPos(glm::vec3(0, 1, 0))
 	{
-		m_Camera = std::make_unique<Camera>(glm::vec3(0, 10.0f, 5.0f));
+		m_Camera = std::make_unique<Camera>(glm::vec3(0, 50.0f, 5.0f));
 		GLCall(glEnable(GL_DEPTH_TEST));
 		GLCall(glEnable(GL_BLEND));
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -30,6 +30,7 @@ namespace test
 			"res/textures/skybox/back.jpg"
 		};
 
+		m_Plane = Shape3D::CreatePlane(100);
 		m_Skybox = Shape3D::CreateCube();
 		m_SkyboxTexture = std::make_shared<Texture>(faces);
 		m_SkyboxShader = std::make_shared<Shader>("res/shaders/Unlit_Skybox.shader");
@@ -88,7 +89,7 @@ namespace test
 		if (cameraLock)
 			return;
 
-		float velocity = 5.0f * deltaTime;
+		float velocity = 10.0f * deltaTime;
 
 		if (input.IsKeyDown(GLFW_KEY_A))
 			m_Camera->Move(Camera_Movement::LEFT, velocity);
@@ -137,32 +138,34 @@ namespace test
 			
 		if (water.useReflectionAndRefraction)
 		{
-			/*REFLECTION RENDER*/
-			water.StartReflectionRender();
 			float waterHeight = water.transform.position.y;
 			float distance = 2 * (m_Camera->Position.y - waterHeight);
+			/*REFRACTION RENDER*/
+			water.StartRefractionRender();
+			
+			RenderScene(renderer, glm::vec4(0, distance < 0 ? 1 : -1, 0, waterHeight));
+			RenderSkybox(renderer);
+
+			water.FinishRefractionRender();
+
+			/*REFLECTION RENDER*/
+			water.StartReflectionRender();	
 
 			m_Camera->Position.y -= distance;
 			m_Camera->Pitch += 180.0f;
 			m_Camera->Yaw += 180.0f;
 			m_Camera->FollowMouse(0, 0, false);
+				
 
-			glm::vec4 clippingPlane = glm::vec4(0, 1, 0, -waterHeight * 10);
-
-			RenderScene(renderer, clippingPlane);
+			RenderScene(renderer, glm::vec4(0, 1, 0, -waterHeight));
 			RenderSkybox(renderer);
 
 			m_Camera->Position.y += distance;
 			m_Camera->Pitch -= 180.0f;
 			m_Camera->Yaw -= 180.0f;
 			m_Camera->FollowMouse(0, 0, true);
-
-			/*REFRACTION RENDER*/
-			water.StartRefractionRender();
-			clippingPlane = glm::vec4(0, -1, 0, waterHeight * 10);
-			RenderScene(renderer, clippingPlane);
-			RenderSkybox(renderer);
-			water.FinishRefractionRender();
+				
+			water.FinishReflectionRender();
 		}
 		
 		/*SCENE RENDER*/
@@ -170,7 +173,6 @@ namespace test
 		GLCall(glClearColor(0.06f, 0.02f, 0.13f, 1.0f));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 		RenderScene(renderer);
-		land.OnRender(renderer, *m_Camera, dirLight, m_LightPos);
 		water.OnRender(renderer, *m_Camera, dirLight, m_LightPos);
 		RenderSkybox(renderer);
 	}

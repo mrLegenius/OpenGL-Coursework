@@ -32,12 +32,13 @@ public:
 
 	void OnGUI()
 	{
+
 		if (ImGui::CollapsingHeader("Transform"))
 		{
 			ImGui::Separator();
-			ImGui::DragFloat3("Position", &position[0]);
-			ImGui::DragFloat3("Rotation", &eulerAngles[0]);
-			ImGui::DragFloat3("Scale", &scale[0]);
+			ImGui::DragFloat3("Position", &this->position[0]);
+			ImGui::DragFloat3("Rotation", &this->eulerAngles[0]);
+			ImGui::DragFloat3("Scale", &this->scale[0]);
 			ImGui::Separator();
 		}
 	}

@@ -14,14 +14,10 @@ uniform mat4 u_Model;
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 
-uniform vec4 u_Plane;
-
 uniform float u_Tiling;
-uniform float u_Time;
 
 void main()
 {
-	gl_ClipDistance[0] = dot(vec4(position, 1.0), u_Plane);
 	FragPos = vec3(u_Model * vec4(position, 1.0));
 	Normal = mat3(transpose(inverse(u_Model))) * normal;
 	TexCoords = texCoords * u_Tiling;
@@ -100,6 +96,7 @@ uniform sampler2D normalMap;
 
 uniform int u_UseReflectionAndRefraction;
 uniform int u_UseNormalMap;
+uniform int u_UseDepthTesting;
 
 uniform int u_PointLightsCount;
 uniform int u_SpotLightsCount;
@@ -118,6 +115,7 @@ float clamp01(float value) {
 }
 void main()
 {
+	
 	// properties
 	vec3 norm = normalize(Normal);
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
@@ -139,7 +137,10 @@ void main()
 
 	vec2 distortedTexCoords = texture(dudvMap, vec2(TexCoords.x + u_MoveFactor, TexCoords.y)).rg * 0.1;
 	distortedTexCoords = TexCoords + vec2(distortedTexCoords.x, distortedTexCoords.y + u_MoveFactor);
-	vec2 totalDistortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * u_WaveStrength * clamp(waterDepth / 20.0f, 0.0, 1.0);
+	vec2 totalDistortion = (texture(dudvMap, distortedTexCoords).rg * 2.0 - 1.0) * u_WaveStrength;
+
+	if(u_UseDepthTesting)
+		totalDistortion *= clamp(waterDepth / 20.0f, 0.0, 1.0);
 
 	reflectionTextureCoords += totalDistortion;
 	reflectionTextureCoords.x = clamp(reflectionTextureCoords.x, 0.001, 0.999);
@@ -155,7 +156,7 @@ void main()
 	if (u_UseNormalMap)
 		norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 3.0, normalMapColor.g * 2.0 - 1.0));
 
-	float refractionFactor = dot(-viewDir, norm) * 0.5 + 0.5;
+	float refractionFactor = dot(viewDir, norm) * 0.5 + 0.5;
 	refractionFactor = pow(refractionFactor, u_Reflectivity);
 	
 	// phase 1: Directional lighting
@@ -168,15 +169,21 @@ void main()
 	for (int i = 0; i < u_SpotLightsCount; i++)
 		result += CalcSpotLight(u_SpotLights[i], norm, FragPos, viewDir);
 
-	result *= clamp(waterDepth / 5.0, 0.0, 1.0);
-
-	refractionColor = mix(refractionColor, vec4(result, 1.0), clamp01(map(waterDepth, -1000, 1000, 0.0, 1.0)));
+	if(u_UseDepthTesting)
+	{ 
+		result *= clamp(waterDepth / 5.0, 0.0, 1.0);
+		refractionColor = mix(refractionColor, vec4(u_Material.ambient, 1.0), clamp01(map(waterDepth / u_Transparency, -10, 10, 0.0, 1.0)));
+	}
 
 	if(u_UseReflectionAndRefraction)
 		color = mix(reflectionColor, refractionColor, refractionFactor);
 
 	color += vec4(result, 0.0);
-	color.a = clamp(waterDepth / u_Transparency, 0.0, 1.0);
+
+	if (u_UseDepthTesting)
+		color.a = clamp(waterDepth / u_Transparency, 0.0, 1.0);
+	else
+		color.a = clamp(1.0 / u_Transparency, 0.0, 1.0);
 }
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
