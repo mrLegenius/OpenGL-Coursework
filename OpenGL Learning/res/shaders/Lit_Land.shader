@@ -136,10 +136,12 @@ void main()
 
 	// properties
 	vec3 norm = normalize(Normal);
-	vec4 normalMapColor = texture(normalMap, TexCoords);
+	vec3 normalMapColor = texture(normalMap, TexCoords).rgb;
 
-	norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 2.0 - 1.0, normalMapColor.g * 2.0 - 1.0));
 	
+	norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 2.0 - 1.0, normalMapColor.g * 2.0 - 1.0));
+	norm = normalize(normalMapColor * 2.0 - 1.0);
+
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
 
 	// phase 1: Directional lighting

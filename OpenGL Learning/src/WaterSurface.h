@@ -35,8 +35,6 @@ private:
 	char dudvMap[64];
 	char normalMap[64];
 
-	Material material;
-
 	std::shared_ptr<FrameBuffer> m_ReflectionBuffer;
 	std::shared_ptr<RenderBuffer> m_ReflectionRenderBuffer;
 	std::shared_ptr<Texture> m_ReflectionTexture;
@@ -52,6 +50,7 @@ private:
 
 public:
 	Transform transform;
+	Material material;
 
 	bool useDiffuseTexture = false;
 	bool useSpecularTexture = false;
@@ -64,6 +63,11 @@ public:
 	WaterSurface();
 	~WaterSurface();
 
+	void SetTransparency(float value);
+	void SetWaveSpeed(float value);
+	void SetWaveStrength(float value);
+
+	void SetTiling(unsigned int value);
 	void SetResolution(unsigned int value);
 	void SetDuDvMap(const std::string& path);
 	void SetNormalMap(const std::string& path);
@@ -75,7 +79,7 @@ public:
 
 	void UpdateData();
 	void OnUpdate(float deltaTime);
-	void OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::vec3 lightPos);
+	void OnRender(Renderer renderer, Camera& camera);
 	void OnGUI();
 };
 

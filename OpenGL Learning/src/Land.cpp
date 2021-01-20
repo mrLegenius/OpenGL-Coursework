@@ -1,5 +1,6 @@
 #include "Land.h"
-
+#include "LightManager.h"
+#include "imgui/imgui.h"
 Land::Land()
 {
 	m_Deep = Shape3D::CreatePlane(100);
@@ -15,6 +16,7 @@ Land::Land()
 	m_DeepTexture = std::make_shared<Texture>("res/textures/land/deep.jpg");
 	m_Cookie = std::make_shared<Texture>("res/textures/Cookies/Circle.png");
 
+	SetCookie("res/textures/Cookies/Circle.png");
 	m_LandShader->SetUniform1f("peakHeight", peakHeight);
 	m_LandShader->SetUniform1f("mountainHeight", mountainHeight);
 	m_LandShader->SetUniform1f("middleHeight", middleHeight);
@@ -29,13 +31,6 @@ Land::Land()
 	m_LandShader->SetUniform1i("heightMap", 5);
 	m_LandShader->SetUniform1i("normalMap", 6);
 
-	m_LandShader->SetUniform3f("u_DirLight.ambient", 0.05f, 0.05f, 0.05f);
-	m_LandShader->SetUniform3f("u_DirLight.diffuse", 0.4f, 0.4f, 0.4f);
-	m_LandShader->SetUniform3f("u_DirLight.specular", 0.5f, 0.5f, 0.5f);
-
-	m_LandShader->SetUniform1i("u_PointLightsCount", 1);
-	m_LandShader->SetUniform1i("u_SpotLightsCount", 1);
-
 	GenerateLand();
 }
 
@@ -44,14 +39,15 @@ void Land::OnUpdate(float deltaTime)
 
 }
 
-void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::vec3 lightPos, glm::vec4 clippingPlane)
+void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane)
 {
 	auto& settings = Settings::GetInstance();
 
 	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
-
-	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100000.0f);
-
+	if(transform.scale.y != 0)
+		clippingPlane.w /= transform.scale.y;
+	//auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
+	auto proj = camera.GetPerspectiveProjection();
 	auto view = camera.GetViewMatrix();
 	glm::mat4 model = transform.GetModel();
 
@@ -68,31 +64,9 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 	shader.Bind();
 
 	material.SetTo(shader);
+	LightManager::GetInstance().SetLightingTo(shader, camera);
 
 	shader.SetUniform1f("u_Tiling", tiling);
-
-	std::string light = "u_PointLights[0]";
-
-	shader.SetUniformVec3f(light + ".position", lightPos);
-	shader.SetUniformVec3f(light + ".ambient", glm::vec3(0.5f, 0.5f, 0.5f));
-	shader.SetUniformVec3f(light + ".diffuse", glm::vec3(0.3f, 0.3f, 0.3f));
-	shader.SetUniformVec3f(light + ".specular", glm::vec3(0.3f, 0.3f, 0.3f));
-	shader.SetUniform1f(light + ".constant", 1.0f);
-	shader.SetUniform1f(light + ".linear", 0.09f);
-	shader.SetUniform1f(light + ".quadratic", 0.032f);
-
-	shader.SetUniformVec3f("u_DirLight.direction", dirLight);
-
-	shader.SetUniformVec3f("u_SpotLights[0].position", camera.Position);
-	shader.SetUniformVec3f("u_SpotLights[0].direction", camera.Front);
-	shader.SetUniform3f("u_SpotLights[0].ambient", 0.0f, 0.0f, 0.0f);
-	shader.SetUniform3f("u_SpotLights[0].diffuse", 1.0f, 1.0f, 1.0f);
-	shader.SetUniform3f("u_SpotLights[0].specular", 1.0f, 1.0f, 1.0f);
-	shader.SetUniform1f("u_SpotLights[0].constant", 1.0f);
-	shader.SetUniform1f("u_SpotLights[0].linear", 0.09);
-	shader.SetUniform1f("u_SpotLights[0].quadratic", 0.032);
-	shader.SetUniform1f("u_SpotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
-	shader.SetUniform1f("u_SpotLights[0].outerCutOff", glm::cos(glm::radians(15.0f)));
 
 	shader.SetUniformMat4f("u_Model", model);
 	shader.SetUniformMat4f("u_View", view);
@@ -102,7 +76,8 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 	shader.SetUniformVec3f("u_ViewPos", camera.Position);
 
 	renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
-
+	shader.Unbind();
+	/*
 	m_DeepTexture->Bind(0);
 	{
 		auto& object = m_Deep;
@@ -122,6 +97,7 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 		shader.SetUniform1f("u_Tiling", tiling * 10);
 		renderer.DrawElementTriangles(shader, object->getObjectVAO(), object->getIndexBuffer());
 	}
+	*/
 }
 
  void Land::OnGUI()
@@ -129,7 +105,7 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 	if (ImGui::CollapsingHeader("Land"))
 	{
 		transform.OnGUI();
-
+		material.OnGUI();
 		/*MAIN SETTINGS*/
 		//Size and Texturing
 		ImGui::DragInt("Resolution", &resolution, 1.0f);
@@ -141,8 +117,11 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 		if (tiling < 0)
 			tiling = 0;
 
-		ImGui::DragFloat("Scale", &scale, 1);
+		
 
+		ImGui::Text("Height Map Generation");
+		ImGui::Separator();
+		ImGui::DragFloat("Scale", &scale, 1);
 		ImGui::DragFloat("Lacunarity", &lacunarity, 0.1f);
 
 		if (lacunarity < 1)
@@ -171,17 +150,20 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 		std::string str_seed = "Seed = " + std::to_string(seed);
 		ImGui::Text(str_seed.c_str());
 
-		material.OnGUI();
-
+		
 		ImGui::DragFloat("Height", &height, 1.0f, 0);
 
 		if (height < 0)
 			height = 0;
 
-		if (ImGui::Button(autoGenerate ? "Auto Generation" : "Manual Generation"))
-		{
-			autoGenerate = !autoGenerate;
-		}
+		ImGui::Separator();
+
+		ImGui::InputText("Cookie", cookie, 64);
+
+		//if (ImGui::Button(autoGenerate ? "Auto Generation" : "Manual Generation"))
+		//{
+		//	autoGenerate = !autoGenerate;
+		//}
 
 		if (ImGui::Button("Generate") || autoGenerate)
 		{
@@ -195,6 +177,12 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 void Land::GenerateLand()
 {
 	m_HeightMap = TextureGenerator::GenerateHeightMap(glm::vec2(quality), scale, octaves, persistence, lacunarity, seed, offset);
+	std::string cookieName = cookie;
+	if (cookieName != prev_Cookie)
+	{
+		m_Cookie = std::make_shared<Texture>(cookieName);
+		prev_Cookie = cookieName;
+	}
 	m_HeightMap = TextureGenerator::ApplyCookie(m_HeightMap, m_Cookie);
 	m_NormalMap = TextureGenerator::GenerateNormalMapFromTexture(m_HeightMap);
 	m_Plane = GenerateMesh(resolution, m_HeightMap, height);

@@ -40,6 +40,7 @@ public:
 		case Type::RedRubber: return GetRedRubber();
 		case Type::WhiteRubber: return GetWhiteRubber();
 		case Type::YellowRubber: return GetYellowRubber();
+		default: return { glm::vec3(0), glm::vec3(0), glm::vec3(0), 1 };
 		}
 	}
 

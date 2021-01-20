@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <vector>
-
+#include "Settings.h"
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum class Camera_Movement {
     FORWARD,
@@ -64,6 +64,12 @@ public:
         return glm::lookAt(Position, Position + Front, Up);
     }
 
+    glm::mat4 GetPerspectiveProjection()
+    {
+        auto& settings = Settings::GetInstance();
+        return glm::perspective(glm::radians(Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 10000.0f);
+    }
+
     void InversePitch()
     {
         Pitch = -Pitch;
@@ -100,6 +106,7 @@ public:
         default:
             break;
         } 
+        updateCameraVectors();
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.

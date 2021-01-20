@@ -20,6 +20,7 @@
 
 #include "WaterSurface.h"
 #include "Land.h"
+#include "DirectionalLight.h"
 
 namespace test
 {
@@ -36,14 +37,15 @@ namespace test
 		void RenderScene(Renderer renderer, glm::vec4 clippingPlane = glm::vec4(0));
 		void RenderSkybox(Renderer renderer);
 
-		float cameraSpeed = 10.0f;
+		float cameraSpeed = 100.0f;
+		std::shared_ptr<DirectionalLight> dirLight;
 		WaterSurface water;
 		Land land;
 
-		glm::vec3 dirLight;
-
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
+
+		float clippingPlaneHeight;
 
 		std::shared_ptr<Shape3D> m_Plane;
 		std::shared_ptr<Shape3D> m_Skybox;

@@ -1,6 +1,7 @@
 #include "WaterSurface.h"
 #include "Settings.h"
-
+#include "LightManager.h"
+#include "imgui/imgui.h"
 WaterSurface::WaterSurface()
 {
 	m_WaterShader = std::make_shared<Shader>("res/shaders/Lit_Water.shader");
@@ -9,13 +10,6 @@ WaterSurface::WaterSurface()
     m_NormalMap = std::make_shared<Texture>();
 
 	m_WaterShader->Bind();
-	m_WaterShader->SetUniform3f("u_DirLight.ambient", 0.05f, 0.05f, 0.05f);
-	m_WaterShader->SetUniform3f("u_DirLight.diffuse", 0.4f, 0.4f, 0.4f);
-	m_WaterShader->SetUniform3f("u_DirLight.specular", 0.5f, 0.5f, 0.5f);
-
-	m_WaterShader->SetUniform1i("u_PointLightsCount", 1);
-	m_WaterShader->SetUniform1i("u_SpotLightsCount", 1);
-
 	m_WaterShader->SetUniform1i("normalMap", 0);
 	m_WaterShader->SetUniform1i("reflectionTexture", 1);
 	m_WaterShader->SetUniform1i("refractionTexture", 2);
@@ -54,6 +48,26 @@ WaterSurface::WaterSurface()
 WaterSurface::~WaterSurface()
 {
 	m_WaterShader->Unbind();
+}
+
+void WaterSurface::SetTransparency(float value)
+{
+	transparency = value;
+}
+
+void WaterSurface::SetWaveSpeed(float value)
+{
+	moveSpeed = value;
+}
+
+void WaterSurface::SetWaveStrength(float value)
+{
+	waveStrength = value;
+}
+
+void WaterSurface::SetTiling(unsigned int value)
+{
+	tiling = value;
 }
 
 void WaterSurface::SetResolution(unsigned int value)
@@ -124,13 +138,14 @@ void WaterSurface::OnUpdate(float deltaTime)
 	moveFactor = glm::fract(moveFactor);
 }
 
-void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::vec3 lightPos)
+void WaterSurface::OnRender(Renderer renderer, Camera& camera)
 {
 	auto& settings = Settings::GetInstance();
 
 	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
 
-	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100000.0f);
+	//auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100000.0f);
+	auto proj = camera.GetPerspectiveProjection();
 	auto view = camera.GetViewMatrix();
 	auto model = transform.GetModel();
 
@@ -146,6 +161,7 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLigh
 	shader.Bind();
 
 	material.SetTo(shader);
+	LightManager::GetInstance().SetLightingTo(shader, camera);
 
 	m_WaterShader->Bind();
 	m_WaterShader->SetUniform1i("useDuDvMap", (int)useDuDvMap);
@@ -158,31 +174,7 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLigh
 	m_WaterShader->SetUniform1f("u_WaveStrength", waveStrength);
 	m_WaterShader->SetUniform1i("u_UseDepthTesting", useDepth);
 
-	shader.SetUniform1f("u_Time", (float)glfwGetTime());
 	shader.SetUniform1f("u_MoveFactor", moveFactor);
-
-	std::string light = "u_PointLights[0]";
-
-	shader.SetUniformVec3f(light + ".position", lightPos);
-	shader.SetUniformVec3f(light + ".ambient", glm::vec3(0.5f, 0.5f, 0.5f));
-	shader.SetUniformVec3f(light + ".diffuse", glm::vec3(0.3f, 0.3f, 0.3f));
-	shader.SetUniformVec3f(light + ".specular", glm::vec3(0.3f, 0.3f, 0.3f));
-	shader.SetUniform1f(light + ".constant", 1.0f);
-	shader.SetUniform1f(light + ".linear", 0.09f);
-	shader.SetUniform1f(light + ".quadratic", 0.032f);
-
-	shader.SetUniformVec3f("u_DirLight.direction", dirLight);
-
-	shader.SetUniformVec3f("u_SpotLights[0].position", camera.Position);
-	shader.SetUniformVec3f("u_SpotLights[0].direction", camera.Front);
-	shader.SetUniform3f("u_SpotLights[0].ambient", 0.0f, 0.0f, 0.0f);
-	shader.SetUniform3f("u_SpotLights[0].diffuse", 1.0f, 1.0f, 1.0f);
-	shader.SetUniform3f("u_SpotLights[0].specular", 1.0f, 1.0f, 1.0f);
-	shader.SetUniform1f("u_SpotLights[0].constant", 1.0f);
-	shader.SetUniform1f("u_SpotLights[0].linear", 0.09);
-	shader.SetUniform1f("u_SpotLights[0].quadratic", 0.032);
-	shader.SetUniform1f("u_SpotLights[0].cutOff", glm::cos(glm::radians(12.5f)));
-	shader.SetUniform1f("u_SpotLights[0].outerCutOff", glm::cos(glm::radians(15.0f)));
 
 	shader.SetUniformMat4f("u_Model", model);
 	shader.SetUniformMat4f("u_View", view);

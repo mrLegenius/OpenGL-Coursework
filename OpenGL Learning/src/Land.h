@@ -17,6 +17,8 @@
 
 class Land
 {
+	std::string prev_Cookie;
+	char cookie[64];
 public:
 	Transform transform;
 
@@ -62,13 +64,20 @@ public:
 
 	void OnUpdate(float deltaTime);
 	
-	void OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::vec3 lightPos, glm::vec4 clippingPlane = glm::vec4(0));
-
+	void OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane = glm::vec4(0));
+	
 	void OnGUI();
 
 	void GenerateLand();
 
 	std::shared_ptr<Shape3D> GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap, float heightMultiplier);
+
+	void SetCookie(const std::string& path)
+	{
+		assert(path.size() < 64);
+		strcpy_s(cookie, path.c_str());
+	}
+
 
 	float map(float value, float min1, float max1, float min2, float max2);
 };

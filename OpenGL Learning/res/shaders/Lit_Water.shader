@@ -172,7 +172,7 @@ void main()
 	if(u_UseDepthTesting)
 	{ 
 		result *= clamp(waterDepth / 5.0, 0.0, 1.0);
-		refractionColor = mix(refractionColor, vec4(u_Material.ambient, 1.0), clamp01(map(waterDepth / u_Transparency, -10, 10, 0.0, 1.0)));
+		refractionColor = mix(refractionColor, vec4(u_Material.ambient, 1.0), clamp01(map(waterDepth / u_Transparency, -1, 1, 0.0, 1.0)));
 	}
 
 	if(u_UseReflectionAndRefraction)

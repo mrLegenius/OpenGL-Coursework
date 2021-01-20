@@ -125,6 +125,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\LightManager.cpp" />
+    <ClCompile Include="src\DirectionalLight.cpp" />
     <ClCompile Include="src\Land.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\RenderBuffer.cpp" />
@@ -299,6 +301,8 @@
     <None Include="src\vendor\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\LightManager.h" />
+    <ClInclude Include="src\DirectionalLight.h" />
     <ClInclude Include="src\Land.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\RenderBuffer.h" />
