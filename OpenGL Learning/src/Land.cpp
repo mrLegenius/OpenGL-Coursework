@@ -2,7 +2,6 @@
 
 Land::Land()
 {
-	
 	m_Deep = Shape3D::CreatePlane(100);
 	m_DeepShader = std::make_unique<Shader>("res/shaders/Unlit_Texture.shader");
 
@@ -51,7 +50,7 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 
 	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
 
-	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
+	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100000.0f);
 
 	auto view = camera.GetViewMatrix();
 	glm::mat4 model = transform.GetModel();
@@ -105,24 +104,22 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLight, glm::
 	renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 
 	m_DeepTexture->Bind(0);
-	//Light Source
 	{
 		auto& object = m_Deep;
 		auto& shader = *m_DeepShader;
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), transform.position);
-		model = glm::translate(glm::mat4(1.0f), glm::vec3(0, -0.01f, 0));
+		model = glm::translate(model, glm::vec3(0, -0.05f, 0));
 		model = glm::rotate(model, glm::radians(transform.eulerAngles.x + 90), glm::vec3(1.0f, 0, 0));
 		model = glm::rotate(model, glm::radians(transform.eulerAngles.y), glm::vec3(0, 1.0f, 0));
 		model = glm::rotate(model, glm::radians(transform.eulerAngles.z), glm::vec3(0, 0, 1.0f));
-		model = glm::scale(model, transform.scale);
-		model = glm::scale(model, glm::vec3(1000.0f, 1000.0f, 1.0f));
+		model = glm::scale(model, glm::vec3(10 * transform.scale.x, 10 * transform.scale.z, 1));
 		shader.Bind();
 		shader.SetUniformMat4f("u_Model", model);
 		shader.SetUniformMat4f("u_View", view);
 		shader.SetUniformMat4f("u_Projection", proj);
 		shader.SetUniform1i("u_Texture", 0);
 		shader.SetUniformVec4f("u_Plane", clippingPlane);
-		shader.SetUniform1f("u_Tiling", tiling);
+		shader.SetUniform1f("u_Tiling", tiling * 10);
 		renderer.DrawElementTriangles(shader, object->getObjectVAO(), object->getIndexBuffer());
 	}
 }

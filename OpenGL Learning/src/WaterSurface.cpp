@@ -130,7 +130,7 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, glm::vec3 dirLigh
 
 	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
 
-	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
+	auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100000.0f);
 	auto view = camera.GetViewMatrix();
 	auto model = transform.GetModel();
 
@@ -208,8 +208,8 @@ void WaterSurface::OnGUI()
 
 		ImGui::DragFloat("Tiling", &tiling);
 
-		if (tiling < 0)
-			tiling = 0;
+		if (tiling < 1)
+			tiling = 1;
 
 		//Attributes
 		ImGui::DragFloat("Transparency", &transparency, 0.01f);

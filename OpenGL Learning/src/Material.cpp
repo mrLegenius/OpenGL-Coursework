@@ -2,7 +2,10 @@
 #include "Materials.h"
 #include "imgui/imgui.h"
 
- Material::Material() { }
+
+ Material::Material()
+ { 
+ }
  Material::Material(glm::vec3 ambient,
 	 glm::vec3 diffuse,
 	 glm::vec3 specular,
@@ -10,7 +13,9 @@
 	 : ambient(ambient)
 	 , diffuse(diffuse)
 	 , specular(specular)
-	 , shininess(shininess) { }
+	 , shininess(shininess)
+ {
+ }
 
  void  Material::SetTo(Shader& shader)
  {
@@ -23,11 +28,11 @@
  void Material::OnGUI()
  {
 	 if (ImGui::CollapsingHeader("Material"))
-	 {
+	 { 
 		 ImGui::Separator();
-		 ImGui::DragFloat3("Ambient", &this->ambient[0], 0.01f, 0.0f, 1.0f);
-		 ImGui::DragFloat3("Diffuse", &this->diffuse[0], 0.01f, 0.0f, 1.0f);
-		 ImGui::DragFloat3("Specular", &this->specular[0], 0.01f, 0.0f, 1.0f);
+		 ImGui::ColorEdit3("Ambient", &this->ambient[0]);
+		 ImGui::ColorEdit3("Diffuse", &this->diffuse[0]);
+		 ImGui::ColorEdit3("Specular", &this->specular[0]);
 		 ImGui::DragFloat("Shininess", &this->shininess, 0.1f, 1.0f, 1000.0f);
 		 ImGui::Separator();
 		 const char* items[] = { "Emerald", "Jade", "Obisidian", "Pearl", "Ruby", "Turquoise",
@@ -43,5 +48,6 @@
 			 *this = Materials::GetMaterial((Materials::Type)item_current_idx);
 
 		 ImGui::Separator();
+		 
 	 }
  }

@@ -40,9 +40,10 @@ namespace test
 
 		#pragma region WATER_SETTINGS
 			water.transform.eulerAngles.x = 90;
-			water.transform.scale.x = land.transform.scale.x * land.resolution;
-			water.transform.scale.y = land.transform.scale.z * land.resolution;
-
+			water.transform.position.y = 40;
+			water.transform.scale.x = land.transform.scale.x * land.resolution * 1000;
+			water.transform.scale.y = land.transform.scale.z * land.resolution * 1000;
+			
 			water.SetResolution(100);
 
 			water.SetDuDvMap("res/textures/DuDv_Water_Map.png");
@@ -55,9 +56,9 @@ namespace test
 			water.UpdateData();
 		#pragma endregion	
 		#pragma region LAND_SETTINGS
-
-			land.transform.scale.x = 100;
-			land.transform.scale.z = 100;
+			land.transform.scale.x = 1000;
+			land.transform.scale.y = 10;
+			land.transform.scale.z = 1000;
 		#pragma endregion
 
 		//LIGHT SOURCE
@@ -75,6 +76,9 @@ namespace test
 		water.OnUpdate(deltaTime);
 		land.OnUpdate(deltaTime);
 
+		//water.transform.position.x = m_Camera->Position.x;
+		//water.transform.position.z = m_Camera->Position.z;
+
 		auto& input = Input::GetInstance();
 
 		if (input.IsKeyPressed(GLFW_KEY_K))
@@ -89,7 +93,7 @@ namespace test
 		if (cameraLock)
 			return;
 
-		float velocity = 10.0f * deltaTime;
+		float velocity = cameraSpeed * deltaTime;
 
 		if (input.IsKeyDown(GLFW_KEY_A))
 			m_Camera->Move(Camera_Movement::LEFT, velocity);
@@ -179,8 +183,15 @@ namespace test
 
 	void test::TestScene::OnImGuiRender()
 	{
+		ImGui::PushID(0);
 		water.OnGUI();
+
+		ImGui::PushID(1);
 		land.OnGUI();
+
+		ImGui::PopID();
+		ImGui::PopID();
+
 		ImGui::Separator();
 		if (ImGui::Button(polygoneModeFill ? "Polygon Mode = Fill" : "Polygon Mode = Line"))
 		{
@@ -199,6 +210,7 @@ namespace test
 		ImGui::Text("K - Polygon Mode");
 		ImGui::Separator();
 
+		ImGui::DragFloat("Camera Speed", &cameraSpeed, 1.0f, 0.0f, 10000.0f);
 		ImGui::InputFloat3("Light Pos", &m_LightPos[0]);
 		ImGui::SliderFloat3("Dir Light", &dirLight[0], -glm::pi<float>(), glm::pi<float>());
 		ImGui::Separator();

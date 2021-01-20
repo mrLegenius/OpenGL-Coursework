@@ -93,8 +93,10 @@ int main(void)
 					currentTest = testMenu;
 				}
 				currentTest->OnImGuiRender();
+				
 				ImGui::End();
 			}
+			//ImGui::ShowDemoWindow();
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			/* Swap front and back buffers */

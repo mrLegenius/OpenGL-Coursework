@@ -36,6 +36,7 @@ namespace test
 		void RenderScene(Renderer renderer, glm::vec4 clippingPlane = glm::vec4(0));
 		void RenderSkybox(Renderer renderer);
 
+		float cameraSpeed = 10.0f;
 		WaterSurface water;
 		Land land;
 
@@ -54,6 +55,5 @@ namespace test
 		std::shared_ptr<Shape3D> m_LightSource;
 		std::unique_ptr<Shader> m_LightSourceShader;
 		glm::vec3 m_LightPos;
-
 	};
 }
