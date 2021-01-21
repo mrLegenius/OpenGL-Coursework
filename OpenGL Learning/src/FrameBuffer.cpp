@@ -12,6 +12,12 @@ FrameBuffer::~FrameBuffer()
 	GLCall(glDeleteFramebuffers(1, &m_RendererID));
 }
 
+void FrameBuffer::BlockDrawingColors()
+{
+	Bind();
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+}
 void FrameBuffer::AttachTexture(unsigned int texture)
 {
 	Bind();

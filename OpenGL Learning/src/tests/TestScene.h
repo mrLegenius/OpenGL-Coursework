@@ -12,7 +12,6 @@
 #include "VertexBufferLayout.h"
 #include "Texture.h"
 
-#include "Settings.h"
 #include "Camera.h"
 #include "Shape3D.h"
 
@@ -34,10 +33,13 @@ namespace test
 		void OnRender() override;
 		void OnImGuiRender() override;
 	private:
-		void RenderScene(Renderer renderer, glm::vec4 clippingPlane = glm::vec4(0));
+		void RenderScene(Renderer renderer, glm::vec4 clippingPlane = glm::vec4(0), std::shared_ptr<Shader> shadowMapShader = nullptr);
 		void RenderSkybox(Renderer renderer);
 
+		void RenderDebug(Renderer renderer);
+
 		float cameraSpeed = 100.0f;
+		float lightDistance = 10.0f;
 		std::shared_ptr<DirectionalLight> dirLight;
 		WaterSurface water;
 		Land land;
@@ -47,7 +49,16 @@ namespace test
 
 		float clippingPlaneHeight;
 
+		//SHADOW MAPPING
+		std::shared_ptr<FrameBuffer> m_ShadowMapBuffer;
+		std::shared_ptr<Shader> m_ShadowMapShader;
+		//SHADOW MAPPING END
+
+
 		std::shared_ptr<Shape3D> m_Plane;
+		std::shared_ptr<Shader> m_TestTextureShader;
+
+
 		std::shared_ptr<Shape3D> m_Skybox;
 		std::shared_ptr<Texture> m_SkyboxTexture;
 		std::shared_ptr<Shader> m_SkyboxShader;

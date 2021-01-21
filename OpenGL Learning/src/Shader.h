@@ -34,6 +34,7 @@ public:
 	void SetUniformMat2f(const std::string& name, const glm::mat2& matrix);
 	void SetUniformMat3f(const std::string& name, const glm::mat3& matrix);
 	void SetUniformMat4f(const std::string& name, const glm::mat4& matrix);
+	void SetUniformMat4fv(const std::string& name, const glm::f32* value);
 
 private:
 	ShaderProgramSource ParseShader(const std::string & filePath, const int pointLightsCount, const int spotLightsCount);

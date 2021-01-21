@@ -79,7 +79,7 @@ public:
 
 	void UpdateData();
 	void OnUpdate(float deltaTime);
-	void OnRender(Renderer renderer, Camera& camera);
+	void OnRender(Renderer renderer, Camera& camera, std::shared_ptr<Shader> shadowShader = nullptr);
 	void OnGUI();
 };
 

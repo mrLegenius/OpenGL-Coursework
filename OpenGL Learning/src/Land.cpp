@@ -30,6 +30,7 @@ Land::Land()
 	m_LandShader->SetUniform1i("deepTexture", 4);
 	m_LandShader->SetUniform1i("heightMap", 5);
 	m_LandShader->SetUniform1i("normalMap", 6);
+	m_LandShader->SetUniform1i("shadowMap", 7);
 
 	GenerateLand();
 }
@@ -39,15 +40,15 @@ void Land::OnUpdate(float deltaTime)
 
 }
 
-void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane)
+void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane, std::shared_ptr<Shader> shadowMapShader)
 {
 	auto& settings = Settings::GetInstance();
 
 	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
 	if(transform.scale.y != 0)
 		clippingPlane.w /= transform.scale.y;
-	//auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
-	auto proj = camera.GetPerspectiveProjection();
+
+	auto proj = camera.GetProjection();
 	auto view = camera.GetViewMatrix();
 	glm::mat4 model = transform.GetModel();
 
@@ -58,23 +59,28 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane)
 	m_DeepTexture->Bind(4);
 	m_HeightMap->Bind(5);
 	m_NormalMap->Bind(6);
+	
 	auto& object = *m_Plane;
-	auto& shader = *m_LandShader;
+	auto& shader = shadowMapShader ? *shadowMapShader : *m_LandShader;
 
 	shader.Bind();
-
-	material.SetTo(shader);
-	LightManager::GetInstance().SetLightingTo(shader, camera);
-
-	shader.SetUniform1f("u_Tiling", tiling);
-
 	shader.SetUniformMat4f("u_Model", model);
-	shader.SetUniformMat4f("u_View", view);
-	shader.SetUniformMat4f("u_Projection", proj);
-	shader.SetUniformVec4f("u_Plane", clippingPlane);
+	LightManager::GetInstance().SetLightSpaceMatrixTo(shader);
+	if (shadowMapShader == nullptr)
+	{
+		LightManager::GetInstance().GetShadowMap()->Bind(7);
+		LightManager::GetInstance().SetLightingTo(shader, camera);
+		material.SetTo(shader);
+		shader.SetUniform1f("u_Tiling", tiling);
 
-	shader.SetUniformVec3f("u_ViewPos", camera.Position);
+		
+		shader.SetUniformMat4f("u_View", view);
+		shader.SetUniformMat4f("u_Projection", proj);
+		shader.SetUniformVec4f("u_Plane", clippingPlane);
 
+		shader.SetUniformVec3f("u_ViewPos", camera.Position);
+	}
+	
 	renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 	shader.Unbind();
 	/*

@@ -39,6 +39,10 @@ public:
     float MouseSensitivity;
     float Zoom;
 
+    bool isOrthographic = false;
+    float nearPlane = 0.1f;
+    float farPlane = 1000.0f;
+
     // constructor with vectors
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
     {
@@ -64,10 +68,18 @@ public:
         return glm::lookAt(Position, Position + Front, Up);
     }
 
-    glm::mat4 GetPerspectiveProjection()
+    glm::mat4 GetProjection()
     {
         auto& settings = Settings::GetInstance();
-        return glm::perspective(glm::radians(Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 10000.0f);
+
+        if (isOrthographic) {
+            const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
+            return glm::ortho(-Zoom, Zoom, -Zoom * aspect, Zoom * aspect, nearPlane, farPlane);
+        }
+        else {
+            const float aspect = (float)settings.screenWidth / (float)settings.screenHeight;
+            return glm::perspective(glm::radians(Zoom), aspect, nearPlane, farPlane);
+        }
     }
 
     void InversePitch()
@@ -141,6 +153,11 @@ public:
             Zoom = 45.0f;
     }
 
+    void UpdateUpAndRight(glm::vec3 front)
+    {
+        Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+        Up = glm::normalize(glm::cross(Right, Front));
+    }
 private:
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors()
@@ -152,7 +169,6 @@ private:
         front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         Front = glm::normalize(front);
         // also re-calculate the Right and Up vector
-        Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        Up = glm::normalize(glm::cross(Right, Front));
+        UpdateUpAndRight(front);
     }
 };

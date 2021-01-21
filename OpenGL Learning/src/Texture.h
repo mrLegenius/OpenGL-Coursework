@@ -15,6 +15,7 @@ public:
 	Texture(GLfloat data[], int width, int height);
 	Texture(int width, int height);
 	Texture(int width, int height, GLenum format);
+	Texture(int width, int height, GLenum format, GLenum type);
 	Texture(std::string paths[6]);
 	
 	~Texture();

@@ -8,7 +8,7 @@ public:
 	glm::vec3 diffuse = glm::vec3(0);
 	glm::vec3 specular = glm::vec3(0);
 
-	float shininess = 0;
+	float shininess = 1;
 
 	Material();
 	Material(glm::vec3 ambient,

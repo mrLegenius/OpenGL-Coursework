@@ -64,7 +64,7 @@ public:
 
 	void OnUpdate(float deltaTime);
 	
-	void OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane = glm::vec4(0));
+	void OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane = glm::vec4(0), std::shared_ptr<Shader> shadowMapShader = nullptr);
 	
 	void OnGUI();
 

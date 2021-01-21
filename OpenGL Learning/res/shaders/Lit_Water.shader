@@ -172,7 +172,7 @@ void main()
 	if(u_UseDepthTesting)
 	{ 
 		result *= clamp(waterDepth / 5.0, 0.0, 1.0);
-		refractionColor = mix(refractionColor, vec4(u_Material.ambient, 1.0), clamp01(map(waterDepth / u_Transparency, -1, 1, 0.0, 1.0)));
+		//refractionColor = mix(refractionColor, vec4(u_Material.ambient, 1.0), clamp01(map(waterDepth / u_Transparency, -1, 1, 0.0, 1.0)));
 	}
 
 	if(u_UseReflectionAndRefraction)
@@ -194,6 +194,11 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	// specular shading
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Material.shininess);
+
+	//blinn
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	spec = pow(max(dot(normal, halfwayDir), 0.0), u_Material.shininess * 2);
+
 	// combine results
 	vec3 ambient = light.ambient * u_Material.ambient;
 	vec3 diffuse = light.diffuse * diff * u_Material.diffuse;

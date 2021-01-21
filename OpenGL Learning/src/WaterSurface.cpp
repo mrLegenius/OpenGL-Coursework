@@ -138,14 +138,11 @@ void WaterSurface::OnUpdate(float deltaTime)
 	moveFactor = glm::fract(moveFactor);
 }
 
-void WaterSurface::OnRender(Renderer renderer, Camera& camera)
+void WaterSurface::OnRender(Renderer renderer, Camera& camera, std::shared_ptr<Shader> shadowShader)
 {
 	auto& settings = Settings::GetInstance();
 
-	const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
-
-	//auto proj = glm::perspective(glm::radians(camera.Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 100000.0f);
-	auto proj = camera.GetPerspectiveProjection();
+	auto proj = camera.GetProjection();
 	auto view = camera.GetViewMatrix();
 	auto model = transform.GetModel();
 
@@ -156,32 +153,37 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera)
 	m_RefractionDepthTexture->Bind(4);
 
 	auto& object = *m_Plane;
-	auto& shader = *m_WaterShader;
+	auto& shader = shadowShader ? *shadowShader : *m_WaterShader;
 	
 	shader.Bind();
 
-	material.SetTo(shader);
-	LightManager::GetInstance().SetLightingTo(shader, camera);
-
-	m_WaterShader->Bind();
-	m_WaterShader->SetUniform1i("useDuDvMap", (int)useDuDvMap);
-	m_WaterShader->SetUniform1i("u_UseNormalMap", (int)useNormalMap);
-	m_WaterShader->SetUniform1i("u_UseReflectionAndRefraction", (int)useReflectionAndRefraction);
-
-	m_WaterShader->SetUniform1f("u_Tiling", tiling);
-	m_WaterShader->SetUniform1f("u_Transparency", transparency);
-	m_WaterShader->SetUniform1f("u_Reflectivity", reflectivity);
-	m_WaterShader->SetUniform1f("u_WaveStrength", waveStrength);
-	m_WaterShader->SetUniform1i("u_UseDepthTesting", useDepth);
-
-	shader.SetUniform1f("u_MoveFactor", moveFactor);
-
 	shader.SetUniformMat4f("u_Model", model);
-	shader.SetUniformMat4f("u_View", view);
-	shader.SetUniformMat4f("u_Projection", proj);
+	LightManager::GetInstance().SetLightSpaceMatrixTo(shader);
+	
+	if (shadowShader == nullptr)
+	{
+		shader.Bind();
+		LightManager::GetInstance().SetLightingTo(shader, camera);
+		material.SetTo(shader);
+		
+		shader.SetUniform1i("useDuDvMap", (int)useDuDvMap);
+		shader.SetUniform1i("u_UseNormalMap", (int)useNormalMap);
+		shader.SetUniform1i("u_UseReflectionAndRefraction", (int)useReflectionAndRefraction);
 
-	shader.SetUniformVec3f("u_ViewPos", camera.Position);
+		shader.SetUniform1f("u_Tiling", tiling);
+		shader.SetUniform1f("u_Transparency", transparency);
+		shader.SetUniform1f("u_Reflectivity", reflectivity);
+		shader.SetUniform1f("u_WaveStrength", waveStrength);
+		shader.SetUniform1i("u_UseDepthTesting", useDepth);
 
+		shader.SetUniform1f("u_MoveFactor", moveFactor);
+
+		shader.SetUniformMat4f("u_View", view);
+		shader.SetUniformMat4f("u_Projection", proj);
+
+		shader.SetUniformVec3f("u_ViewPos", camera.Position);
+	}
+	
 	renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 
 }

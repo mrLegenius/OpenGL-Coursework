@@ -4,6 +4,10 @@
 #include "DirectionalLight.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Texture.h"
+
+
+#include "glm/gtc/type_ptr.hpp"
 
 class LightManager
 {
@@ -37,6 +41,18 @@ public:
 		return inst;
 	}
 
+	std::shared_ptr<Texture> GetShadowMap()
+	{
+		return dirLight->shadowTexture;
+	}
+	void SetLightSpaceMatrixTo(Shader& shader)
+	{
+		if (dirLight)
+		{
+			//shader.SetUniformMat4fv("u_LightSpaceMatrix", glm::value_ptr(dirLight->lightSpaceMatrix));
+			shader.SetUniformMat4f("u_LightSpaceMatrix", dirLight->lightSpaceMatrix);
+		}
+	}
 	void SetLightingTo(Shader& shader, Camera& camera)
 	{
 		shader.SetUniform1i("u_PointLightsCount", pointLights.size());

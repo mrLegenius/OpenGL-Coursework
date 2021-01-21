@@ -29,7 +29,7 @@ void Renderer::DrawElementTriangles(const Shader& shader, const VertexArray & va
 	va.Bind();
 	ib.Bind();
 
-	GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
+ 	GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
 }
 void Renderer::DrawElementTriangleFan(const Shader& shader, const VertexArray& va, const IndexBuffer& ib) const
 {

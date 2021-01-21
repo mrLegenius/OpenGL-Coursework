@@ -4,24 +4,40 @@
 #include "GLFW/glfw3.h"
 #include "imgui/imgui.h"
 
+
 #include "Renderer.h"
 #include "Input.h"
 #include "Materials.h"
 #include "LightManager.h"
+
+#include "Settings.h"
+
 namespace test 
 {
 	test::TestScene::TestScene() : m_LightPos(glm::vec3(0, 1, 0))
 	{
-		m_Camera = std::make_unique<Camera>(glm::vec3(30.f, 100.0f, 5.0f));
+		m_Camera = std::make_unique<Camera>(glm::vec3(30.f, 10.0f, 5.0f));
 		GLCall(glEnable(GL_DEPTH_TEST));
 		GLCall(glEnable(GL_BLEND));
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-		
-		dirLight = std::make_shared<DirectionalLight>();
-		LightManager::GetInstance().SetDirectionalLight(dirLight);
-		
 		auto& settings = Settings::GetInstance();
+		dirLight = std::make_shared<DirectionalLight>();
+		dirLight->shadowTexture = std::make_shared<Texture>(settings.shadowMapWidth, settings.shadowMapHeight, GL_DEPTH_COMPONENT);
+		LightManager::GetInstance().SetDirectionalLight(dirLight);
+			
+		m_Plane = Shape3D::CreatePlane(100);
+		m_TestTextureShader = std::make_shared<Shader>("res/shaders/Unlit_Texture.shader");
+		m_TestTextureShader->Bind();
+		m_TestTextureShader->SetUniform1i("u_Texture", 0);
 
+		m_ShadowMapBuffer = std::make_shared<FrameBuffer>();
+		m_ShadowMapBuffer->AttachDepthTexture(dirLight->shadowTexture->GetID());
+		m_ShadowMapBuffer->BlockDrawingColors();
+
+		if (!m_ShadowMapBuffer->IsComplete())
+			std::cout << "Shadow Frame buffer is not completed!" << std::endl;
+
+		m_ShadowMapShader = std::make_shared<Shader>("res/shaders/ShadowMap.shader");
 		//SKYBOX
 		std::string faces[6] =
 		{
@@ -42,9 +58,9 @@ namespace test
 
 		#pragma region WATER_SETTINGS
 			water.transform.eulerAngles.x = -90;
-			water.transform.position.y = 40;
-			water.transform.scale.x = 100000.0f;
-			water.transform.scale.y = 100000.0f;
+			water.transform.position.y = 0;
+			water.transform.scale.x = 100.0f;
+			water.transform.scale.y = 100.0f;
 			
 			water.material = Materials::GetMaterial(Materials::Type::CyanRubber);
 			water.material.shininess = 256.0f;
@@ -66,9 +82,9 @@ namespace test
 			water.UpdateData();
 		#pragma endregion	
 		#pragma region LAND_SETTINGS
-			land.transform.scale.x = 1000;
-			land.transform.scale.y = 10;
-			land.transform.scale.z = 1000;
+			land.transform.scale.x = 10;
+			land.transform.scale.y = 0.1;
+			land.transform.scale.z = 10;
 
 			//land.material = Materials::GetRuby();
 		#pragma endregion
@@ -87,10 +103,6 @@ namespace test
 	{
 		water.OnUpdate(deltaTime);
 		land.OnUpdate(deltaTime);
-
-		//dirLight->direction = m_Camera->Front;
-		water.transform.position.x = m_Camera->Position.x;
-		water.transform.position.z = m_Camera->Position.z;
 
 		auto& input = Input::GetInstance();
 
@@ -145,13 +157,45 @@ namespace test
 			m_Camera->ProcessMouseScroll(-1);
 
 		m_Camera->FollowMouse(input.GetMouseDeltaX(), input.GetMouseDeltaY());
+		
 	}
 
 	void test::TestScene::OnRender()
 	{
-		GLCall(glClearColor(0.06f, 0.02f, 0.13f, 1.0f));
-		GLCall(glEnable(GL_CLIP_DISTANCE0));
+		GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+		auto& settings = Settings::GetInstance();
 		Renderer renderer;
+		// 1. first render to depth map
+		glViewport(0, 0, settings.shadowMapWidth, settings.shadowMapHeight);
+		m_ShadowMapBuffer->Bind();
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		auto lastPos = m_Camera->Position;
+		auto lastFront = m_Camera->Front;
+		m_Camera->Position = glm::normalize(-dirLight->direction) * lightDistance;
+		m_Camera->Front = glm::normalize(dirLight->direction);
+		m_Camera->isOrthographic = true;
+		m_Camera->Zoom /= 2;
+		m_Camera->UpdateUpAndRight(m_Camera->Front);
+
+		dirLight->lightSpaceMatrix = m_Camera->GetProjection() * m_Camera->GetViewMatrix();
+
+		//GLCall(glDisable(GL_CULL_FACE));
+		RenderScene(renderer, glm::vec4(0), m_ShadowMapShader);
+		//water.OnRender(renderer, *m_Camera, m_ShadowMapShader);
+		//GLCall(glEnable(GL_CULL_FACE));
+		m_ShadowMapBuffer->Unbind();
+		m_Camera->isOrthographic = false;
+		m_Camera->Position = lastPos;
+		m_Camera->Front = lastFront;
+		m_Camera->Zoom *= 2;
+		m_Camera->UpdateUpAndRight(m_Camera->Front);
+
+		glViewport(0, 0, settings.screenWidth, settings.screenHeight);
+
+
+		GLCall(glEnable(GL_CLIP_DISTANCE0));
 			
 		if (water.useReflectionAndRefraction)
 		{
@@ -182,8 +226,6 @@ namespace test
 			RenderSkybox(renderer);
 
 			water.FinishRefractionRender();
-
-			
 		}
 		
 		/*SCENE RENDER*/
@@ -193,6 +235,8 @@ namespace test
 		
 		RenderScene(renderer);
 		water.OnRender(renderer, *m_Camera);
+
+		RenderDebug(renderer);
 		RenderSkybox(renderer);
 	}
 
@@ -223,6 +267,7 @@ namespace test
 		ImGui::Separator();
 
 		ImGui::DragFloat("Camera Speed", &cameraSpeed, 1.0f, 0.0f, 10000.0f);
+		ImGui::DragFloat("Light Distance", &lightDistance, 1.0f, 0.0f, 10000.0f);
 		ImGui::InputFloat3("Light Pos", &m_LightPos[0]);
 		ImGui::DragFloat("ClippingHeight", &clippingPlaneHeight, 0.1f, -100000.0f, 10000.0f);
 		
@@ -236,38 +281,18 @@ namespace test
 		ImGui::PopID();
 	}
 
-	void TestScene::RenderScene(Renderer renderer, glm::vec4 clippingPlane)
+	void TestScene::RenderScene(Renderer renderer, glm::vec4 clippingPlane, std::shared_ptr<Shader> shadowMapShader)
 	{
-		auto& settings = Settings::GetInstance();
-
-		const float aspect = (float)settings.screenHeight / (float)settings.screenWidth;
-
-		auto proj = glm::perspective(glm::radians(m_Camera->Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
+		auto proj = m_Camera->GetProjection();
 		auto view = m_Camera->GetViewMatrix();
 
-		land.OnRender(renderer, *m_Camera, clippingPlane);
-
-		/*
-		//Light Source
-		{
-			auto& object = m_LightSource;
-			auto& shader = *m_LightSourceShader;
-			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-			glm::mat4 model = glm::translate(glm::mat4(1.0f), m_LightPos);
-			model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
-			shader.Bind();
-			shader.SetUniformMat4f("u_Model", model);
-			shader.SetUniformMat4f("u_View", view);
-			shader.SetUniformMat4f("u_Projection", proj);
-			shader.SetUniformVec4f("u_Color", color);
-			renderer.DrawElementTriangles(shader, object->getObjectVAO(), object->getIndexBuffer());
-		}*/
+		land.OnRender(renderer, *m_Camera, clippingPlane, shadowMapShader);
 	}
 	void TestScene::RenderSkybox(Renderer renderer)
 	{
 		auto& settings = Settings::GetInstance();
 
-		auto proj = glm::perspective(glm::radians(m_Camera->Zoom), (float)settings.screenWidth / (float)settings.screenHeight, 0.1f, 1000.0f);
+		auto proj = m_Camera->GetProjection();
 		auto view = m_Camera->GetViewMatrix();
 
 		m_SkyboxTexture->Bind(0, GL_TEXTURE_CUBE_MAP);
@@ -280,6 +305,44 @@ namespace test
 			shader.SetUniformMat4f("u_Projection", proj);
 			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 			GLCall(glDepthFunc(GL_LESS));
+		}
+
+	}
+
+	void TestScene::RenderDebug(Renderer renderer)
+	{
+		auto& settings = Settings::GetInstance();
+
+		auto proj = m_Camera->GetProjection();
+		auto view = m_Camera->GetViewMatrix();
+
+		dirLight->shadowTexture->Bind();
+		{
+			auto& object = *m_Plane;
+			auto& shader = *m_TestTextureShader;
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0, 2, 0));
+			model = glm::scale(model, glm::vec3(1.0f));
+			shader.Bind();
+			shader.SetUniform1f("u_Tiling", 1);
+			shader.SetUniformMat4f("u_Model", model);
+			shader.SetUniformMat4f("u_View", view);
+			shader.SetUniformMat4f("u_Projection", proj);
+			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
+		}
+		
+		//Light Source
+		{
+			auto& object = m_LightSource;
+			auto& shader = *m_LightSourceShader;
+			glm::vec4 color = glm::vec4(dirLight->ambient, 1.0f);
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::normalize(-dirLight->direction) * lightDistance);
+			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+			shader.Bind();
+			shader.SetUniformMat4f("u_Model", model);
+			shader.SetUniformMat4f("u_View", view);
+			shader.SetUniformMat4f("u_Projection", proj);
+			shader.SetUniformVec4f("u_Color", color);
+			renderer.DrawElementTriangles(shader, object->getObjectVAO(), object->getIndexBuffer());
 		}
 	}
 }

@@ -159,6 +159,7 @@
     <None Include="res\shaders\Lit_Land.shader" />
     <None Include="res\shaders\Lit_Texture.shader" />
     <None Include="res\shaders\Lit_Water.shader" />
+    <None Include="res\shaders\ShadowMap.shader" />
     <None Include="res\shaders\Unlit_Skybox.shader" />
     <None Include="res\shaders\Unlit_Texture.shader" />
     <None Include="res\shaders\Unlit_Color.shader" />

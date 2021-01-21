@@ -7,6 +7,8 @@ public:
 	FrameBuffer();
 	~FrameBuffer();
 
+	void BlockDrawingColors();
+
 	void AttachTexture(unsigned int texture);
 	void AttachDepthTexture(unsigned int texture);
 	void AttachRenderBuffer(unsigned int rbo);
