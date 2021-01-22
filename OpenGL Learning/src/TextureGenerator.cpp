@@ -1,7 +1,7 @@
 #include "TextureGenerator.h"
 #include "glm/gtc/noise.hpp"
 #include <iostream>
-std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureSize, float scale, int octaves, float persistence, float lacunarity, unsigned long long seed, glm::vec2 offset)
+std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureSize, float scale, int octaves, float persistence, float lacunarity, float exp, unsigned long long seed, glm::vec2 offset)
 {
 	srand(seed);
 	GLfloat* data = new GLfloat[textureSize.x * textureSize.y * sizeof(GLfloat)];
@@ -37,25 +37,32 @@ std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureS
 				float xCoord = (x - halfWidth) / scale * frequency + octaveOffsets[i].x;
 				float yCoord = (y - halfHeight) / scale * frequency + octaveOffsets[i].y;
 
-				float perlinValue = glm::perlin(glm::vec2(xCoord, yCoord)) * 2 - 1;
+				//float xCoord = (x / textureSize.x - 0.5) / scale * frequency + octaveOffsets[i].x;
+				//float yCoord = (y / textureSize.y - 0.5) / scale * frequency + octaveOffsets[i].y;
+				//std::cout << "Perlin" << glm::perlin(glm::vec2(xCoord, yCoord)) * 0.5 + 0.5 << std::endl;
+				float perlinValue = glm::perlin(glm::vec2(xCoord, yCoord)) * 0.5 + 0.5;
 				noiseHeight += perlinValue * amplitude;
-
+				
 				amplitude *= persistence;
 				frequency *= lacunarity;
 			}
+			//std::cout << "Height before exp " << noiseHeight;
+			noiseHeight = glm::pow(noiseHeight, exp);
+			//std::cout << " Height after exp " << noiseHeight << std::endl;
 
 			if (noiseHeight > maxNoiseHeight)
 				maxNoiseHeight = noiseHeight;
 			else if (noiseHeight < minNoiseHeight)
 				minNoiseHeight = noiseHeight;
-
+			
+			
 			unsigned int index = ((int)y * textureSize.x + (int)x) * 4;
 			data[index + 0] = noiseHeight;
 			data[index + 1] = noiseHeight;
 			data[index + 2] = noiseHeight;
 			data[index + 3] = 1.0f;
 		}
-
+	/*
 	for (float y = 0.0f; y < textureSize.y; y++)
 		for (float x = 0.0f; x < textureSize.x; x++)
 		{
@@ -68,7 +75,7 @@ std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureS
 			data[index + 1] = value;
 			data[index + 2] = value;
 			data[index + 3] = 1.0f;
-		}
+		}*/
 
 	auto texture = std::make_shared<Texture>(data, textureSize.x, textureSize.y);
 

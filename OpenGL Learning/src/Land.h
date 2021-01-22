@@ -24,13 +24,13 @@ public:
 
 	int octaves = 4;
 	float scale = 20.0f;
-	float persistence = 0.8f;
-	float lacunarity = 1.1f;
+	float persistence = 0.5f;
+	float lacunarity = 2.0f;
+	float exponent = 1.0f;
 	glm::vec2 offset;
-	float height = 30.0f;
 
 	int quality = 128;
-	int resolution = 100;
+	int resolution = 128;
 
 	unsigned long long seed;
 	bool autoGenerate = false;
@@ -42,10 +42,10 @@ public:
 
 	float tiling = 5.0f;
 
-	float peakHeight = 0.9f;
-	float mountainHeight = 0.7f;
-	float middleHeight = 0.35f;
-	float beachHeight = 0.15f;
+	float peakHeight = 1.0f;
+	float mountainHeight = 0.99f;
+	float middleHeight = 0.7f;
+	float beachHeight = 0.3f;
 	float deepHeight = 0.1f;
 
 	Material material;
@@ -70,7 +70,7 @@ public:
 
 	void GenerateLand();
 
-	std::shared_ptr<Shape3D> GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap, float heightMultiplier);
+	std::shared_ptr<Shape3D> GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap);
 
 	void SetCookie(const std::string& path)
 	{

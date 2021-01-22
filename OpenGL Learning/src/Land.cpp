@@ -17,11 +17,6 @@ Land::Land()
 	m_Cookie = std::make_shared<Texture>("res/textures/Cookies/Circle.png");
 
 	SetCookie("res/textures/Cookies/Circle.png");
-	m_LandShader->SetUniform1f("peakHeight", peakHeight);
-	m_LandShader->SetUniform1f("mountainHeight", mountainHeight);
-	m_LandShader->SetUniform1f("middleHeight", middleHeight);
-	m_LandShader->SetUniform1f("beachHeight", beachHeight);
-	m_LandShader->SetUniform1f("deepHeight", deepHeight);
 
 	m_LandShader->SetUniform1i("peakTexture", 0);
 	m_LandShader->SetUniform1i("mountainTexture", 1);
@@ -72,8 +67,13 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane, 
 		LightManager::GetInstance().SetLightingTo(shader, camera);
 		material.SetTo(shader);
 		shader.SetUniform1f("u_Tiling", tiling);
+	
+		shader.SetUniform1f("peakHeight", peakHeight);
+		shader.SetUniform1f("mountainHeight", mountainHeight);
+		shader.SetUniform1f("middleHeight", middleHeight);
+		shader.SetUniform1f("beachHeight", beachHeight);
+		shader.SetUniform1f("deepHeight", deepHeight);
 
-		
 		shader.SetUniformMat4f("u_View", view);
 		shader.SetUniformMat4f("u_Projection", proj);
 		shader.SetUniformVec4f("u_Plane", clippingPlane);
@@ -123,11 +123,18 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane, 
 		if (tiling < 0)
 			tiling = 0;
 
-		
+		ImGui::DragFloat("Deep", &deepHeight, 0.001f, 0.0f, beachHeight - 0.001f);
+		ImGui::DragFloat("Beach", &beachHeight, 0.001f, deepHeight + 0.001f, middleHeight - 0.001f);
+		ImGui::DragFloat("Middle", &middleHeight, 0.001f, beachHeight + 0.001f, mountainHeight - 0.001f);
+		ImGui::DragFloat("Mountain", &mountainHeight, 0.001f, middleHeight + 0.001f, peakHeight - 0.001f);
+		ImGui::DragFloat("Peak", &peakHeight, 0.001f, mountainHeight + 0.001f, 1.0f);
 
 		ImGui::Text("Height Map Generation");
 		ImGui::Separator();
 		ImGui::DragFloat("Scale", &scale, 1);
+
+		ImGui::DragFloat("Exponent", &exponent, 0.1f);
+
 		ImGui::DragFloat("Lacunarity", &lacunarity, 0.1f);
 
 		if (lacunarity < 1)
@@ -156,12 +163,6 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane, 
 		std::string str_seed = "Seed = " + std::to_string(seed);
 		ImGui::Text(str_seed.c_str());
 
-		
-		ImGui::DragFloat("Height", &height, 1.0f, 0);
-
-		if (height < 0)
-			height = 0;
-
 		ImGui::Separator();
 
 		ImGui::InputText("Cookie", cookie, 64);
@@ -182,19 +183,19 @@ void Land::OnRender(Renderer renderer, Camera& camera, glm::vec4 clippingPlane, 
 
 void Land::GenerateLand()
 {
-	m_HeightMap = TextureGenerator::GenerateHeightMap(glm::vec2(quality), scale, octaves, persistence, lacunarity, seed, offset);
+	m_HeightMap = TextureGenerator::GenerateHeightMap(glm::vec2(quality), scale, octaves, persistence, lacunarity, exponent, seed, offset);
 	std::string cookieName = cookie;
 	if (cookieName != prev_Cookie)
 	{
 		m_Cookie = std::make_shared<Texture>(cookieName);
 		prev_Cookie = cookieName;
 	}
-	m_HeightMap = TextureGenerator::ApplyCookie(m_HeightMap, m_Cookie);
+	//m_HeightMap = TextureGenerator::ApplyCookie(m_HeightMap, m_Cookie);
 	m_NormalMap = TextureGenerator::GenerateNormalMapFromTexture(m_HeightMap);
-	m_Plane = GenerateMesh(resolution, m_HeightMap, height);
+	m_Plane = GenerateMesh(resolution, m_HeightMap);
 }
 
-std::shared_ptr<Shape3D> Land::GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap, float heightMultiplier)
+std::shared_ptr<Shape3D> Land::GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap)
 {
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
@@ -231,7 +232,7 @@ std::shared_ptr<Shape3D> Land::GenerateMesh(int resolution, std::shared_ptr<Text
 
 			GLuint index = (xTex + yTex * width) * 4;
 
-			GLfloat resultHeight = data[index] * heightMultiplier;
+			GLfloat resultHeight = data[index];
 			vertices.push_back(resultHeight);
 
 			//vertices.push_back(cornerZ - y - 1);

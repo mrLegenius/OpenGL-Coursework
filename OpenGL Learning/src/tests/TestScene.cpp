@@ -83,7 +83,7 @@ namespace test
 		#pragma endregion	
 		#pragma region LAND_SETTINGS
 			land.transform.scale.x = 10;
-			land.transform.scale.y = 0.1;
+			land.transform.scale.y = 1;
 			land.transform.scale.z = 10;
 
 			//land.material = Materials::GetRuby();
