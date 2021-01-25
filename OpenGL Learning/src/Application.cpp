@@ -96,7 +96,7 @@ int main(void)
 				
 				ImGui::End();
 			}
-			//ImGui::ShowDemoWindow();
+			ImGui::ShowDemoWindow();
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			/* Swap front and back buffers */

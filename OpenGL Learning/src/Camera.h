@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "Settings.h"
+#include "imgui/imgui.h"
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum class Camera_Movement {
     FORWARD,
@@ -157,6 +158,23 @@ public:
     {
         Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
         Up = glm::normalize(glm::cross(Right, Front));
+    }
+
+    void OnGUI()
+    {
+        if (ImGui::TreeNode("Camera"))
+        {
+            ImGui::Checkbox("Is Orthographic", &isOrthographic);
+
+            ImGui::DragFloat("Near", &nearPlane, 0.1f, 0.1f, 10000000.0f);
+            ImGui::DragFloat("Far", &farPlane, 0.1f, 0.1f, 10000000.0f);
+            if (nearPlane > farPlane)
+                nearPlane = farPlane;
+
+            ImGui::DragFloat("Mouse Sensitivity", &MouseSensitivity, 0.1f, 0.0f, 1000000.0f);
+            ImGui::DragFloat("Zoom", &Zoom, 0.1f, 1.0f, 120.0f);
+            ImGui::TreePop();
+        }
     }
 private:
     // calculates the front vector from the Camera's (updated) Euler Angles

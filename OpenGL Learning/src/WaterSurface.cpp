@@ -190,7 +190,7 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, std::shared_ptr<S
 
 void WaterSurface::OnGUI()
 {
-	if (ImGui::CollapsingHeader("Water Surface"))
+	if (ImGui::TreeNode("Water Surface"))
 	{
 		transform.OnGUI();
 
@@ -252,5 +252,6 @@ void WaterSurface::OnGUI()
 		}
 
 		ImGui::Separator();
+		ImGui::TreePop();
 	}
 }
