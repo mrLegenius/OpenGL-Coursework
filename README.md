@@ -1,2 +1,2 @@
-# OpenGL-Coursework
- OpenGL realization of landscape generation and day/night cycles simulation
+# OpenGL Landscape Generator
+ OpenGL realization of landscape generation based on Perlin noise function.
