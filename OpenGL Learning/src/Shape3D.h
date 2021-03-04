@@ -44,26 +44,26 @@ public:
 		std::vector<float> vertices;
 		std::vector<unsigned int> indices;
 
-		GLuint half = dimensions/2;
+		float half = (dimensions - 1) / 2.0f;
 
-		float size = 1.f / dimensions;
+		float size = 1.f / (dimensions - 1);
 		float halfSize = half * size;
 
 		unsigned int index = 0;
-		for (GLuint i = 0; i < dimensions; i++)
+		for (GLuint x = 0; x < dimensions; x++)
 		{
-			for (GLuint j = 0; j < dimensions; j++)
+			for (GLuint y = 0; y < dimensions; y++)
 			{
-				vertices.push_back(i * size - halfSize);
-				vertices.push_back(j * size - halfSize);
+				vertices.push_back(x * size - halfSize);
+				vertices.push_back(y * size - halfSize);
 				vertices.push_back(0);
 
 				vertices.push_back(0);
 				vertices.push_back(0);
 				vertices.push_back(-1);
 
-				vertices.push_back(i * size);
-				vertices.push_back(j * size);
+				vertices.push_back(x * size);
+				vertices.push_back(y * size);
 			}
 		}
 

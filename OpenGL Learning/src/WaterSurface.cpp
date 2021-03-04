@@ -158,12 +158,12 @@ void WaterSurface::OnRender(Renderer renderer, Camera& camera, std::shared_ptr<S
 	shader.Bind();
 
 	shader.SetUniformMat4f("u_Model", model);
-	LightManager::GetInstance().SetLightSpaceMatrixTo(shader);
+	LightManager::GetInstance().ApplyLightSpaceMatrixTo(shader);
 	
 	if (shadowShader == nullptr)
 	{
 		shader.Bind();
-		LightManager::GetInstance().SetLightingTo(shader, camera);
+		LightManager::GetInstance().ApplyLightingTo(shader, camera);
 		material.SetTo(shader);
 		
 		shader.SetUniform1i("useDuDvMap", (int)useDuDvMap);

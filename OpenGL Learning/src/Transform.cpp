@@ -3,7 +3,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 Transform::Transform(glm::vec3 position, glm::vec3 eulerAngle, glm::vec3 scale)
-	: position(position) , eulerAngles(eulerAngles) , scale(scale) { }
+	: position(position), eulerAngles(eulerAngles), scale(scale) { }
 
 glm::mat4 Transform::GetModel()
 {
@@ -18,12 +18,13 @@ glm::mat4 Transform::GetModel()
 
 void Transform::OnGUI()
 {
-	if (ImGui::CollapsingHeader("Transform"))
+	if (ImGui::TreeNode("Transform"))
 	{
 		ImGui::Separator();
 		ImGui::DragFloat3("Position", &this->position[0]);
 		ImGui::DragFloat3("Rotation", &this->eulerAngles[0]);
 		ImGui::DragFloat3("Scale", &this->scale[0]);
 		ImGui::Separator();
+		ImGui::TreePop();
 	}
 }

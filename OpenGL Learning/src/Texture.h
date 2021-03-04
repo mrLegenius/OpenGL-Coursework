@@ -24,7 +24,7 @@ public:
 	void Bind(unsigned int slot, GLenum target) const;
 	void Unbind() const;
 
-	inline int GetID() const { return m_RendererID; }
+	inline unsigned int GetID() const { return m_RendererID; }
 	inline int GetWidth() const { return m_Width; }
 	inline int GetHeight() const { return m_Height; }
 	void GetPixels(GLfloat* data);

@@ -27,7 +27,7 @@
 
  void Material::OnGUI()
  {
-	 if (ImGui::CollapsingHeader("Material"))
+	 if (ImGui::TreeNode("Material"))
 	 { 
 		 ImGui::Separator();
 		 ImGui::ColorEdit3("Ambient", &this->ambient[0]);
@@ -48,6 +48,6 @@
 			 *this = Materials::GetMaterial((Materials::Type)item_current_idx);
 
 		 ImGui::Separator();
-		 
+		 ImGui::TreePop();
 	 }
  }
