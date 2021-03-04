@@ -3,11 +3,9 @@
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
-layout(location = 2) in vec2 texCoords;
 
 out vec3 Normal;
 out vec3 FragPos;
-out vec2 TexCoords;
 
 uniform mat4 u_Model;
 uniform mat4 u_View;
@@ -17,7 +15,6 @@ void main()
 {
 	FragPos = vec3(u_Model * vec4(position, 1.0));
 	Normal = mat3(transpose(inverse(u_Model))) * normal;
-	TexCoords = texCoords;
 
 	gl_Position = u_Projection * u_View * vec4(FragPos, 1.0);
 };
@@ -39,7 +36,6 @@ struct DirLight {
 	vec3 diffuse;
 	vec3 specular;
 };
-
 struct PointLight {
 	vec3 position;
 
@@ -68,7 +64,6 @@ struct SpotLight {
 
 in vec3 Normal;
 in vec3 FragPos;
-in vec2 TexCoords;
 
 layout(location = 0) out vec4 color;
 

@@ -144,8 +144,8 @@ void main()
 	vec3 norm = normalize(Normal);
 	vec3 normalMapColor = texture(normalMap, TexCoords).rgb;
 
-	norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 2.0 - 1.0, normalMapColor.g));
-	//norm = normalize(normalMapColor.rgb * 2.0 - 1.0);
+	//norm = normalize(vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 2.0 - 1.0, normalMapColor.g));
+	norm = normalize(normalMapColor.rgb * 2.0 - 1.0);
 
 	vec3 viewDir = normalize(u_ViewPos - FragPos);
 
@@ -175,13 +175,12 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 
 	float currentDepth = projCoords.z;
 
-	float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.001);
-	bias = 0.001;
+	float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-	for (int x = -1; x <= 1; ++x)
+	for (int x = -1; x <= 1; x++)
 	{
-		for (int y = -1; y <= 1; ++y)
+		for (int y = -1; y <= 1; y++)
 		{
 			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
 			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
@@ -196,7 +195,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 }
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 {
-	vec3 lightDir = normalize(-light.direction);
+	vec3 lightDir = normalize(light.direction);
 	// diffuse shading
 	float diff = max(dot(normal, lightDir), 0.0);
 	// specular shading
@@ -204,8 +203,8 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_Material.shininess);
 
 	//blinn
-	vec3 halfwayDir = normalize(lightDir + viewDir);
-	spec = pow(max(dot(normal, halfwayDir), 0.0), u_Material.shininess * 2);
+	//vec3 halfwayDir = normalize(lightDir + viewDir);
+	//spec = pow(max(dot(normal, halfwayDir), 0.0), u_Material.shininess * 2);
 
 	// combine results
 	vec3 ambient = light.ambient;

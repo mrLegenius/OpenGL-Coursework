@@ -34,7 +34,7 @@ uniform sampler2D u_Texture;
 void main()
 {
 	float depthValue = texture(u_Texture, TexCoords).r;
-	color = vec4(vec3(depthValue), 1.0);
+	color = vec4(texture(u_Texture, TexCoords).rgb, 1.0);
 	
 	//vec4 texColor = texture(u_Texture, v_TexCoord);
 	//color = texColor;
