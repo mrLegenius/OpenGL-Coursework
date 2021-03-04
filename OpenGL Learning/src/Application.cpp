@@ -67,6 +67,7 @@ int main(void)
 		currentTest = testMenu;
 
 		testMenu->RegisterTest<test::TestScene>("Test Scene");
+		testMenu->RegisterTest<test::TerrainTest>("Terrain");
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
