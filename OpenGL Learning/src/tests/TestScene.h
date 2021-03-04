@@ -43,6 +43,7 @@ namespace test
 		std::shared_ptr<DirectionalLight> dirLight;
 		WaterSurface water;
 		Land land;
+		Land land2;
 
 		bool cameraLock = true;
 		bool polygoneModeFill = true;

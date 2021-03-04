@@ -62,7 +62,7 @@ namespace test
 			water.transform.scale.x = 100.0f;
 			water.transform.scale.y = 100.0f;
 			
-			water.material = Materials::GetMaterial(Materials::Type::CyanRubber);
+			water.material = Materials::GetCyanRubber();
 			water.material.shininess = 256.0f;
 
 			water.SetTiling(1000.0f);
@@ -82,9 +82,8 @@ namespace test
 			water.UpdateData();
 		#pragma endregion	
 		#pragma region LAND_SETTINGS
-			land.transform.scale.x = 10;
-			land.transform.scale.y = 1;
-			land.transform.scale.z = 10;
+			land.offset = glm::vec2(0, 0);
+			land2.offset = glm::vec2(1, 0);
 
 			//land.material = Materials::GetRuby();
 		#pragma endregion
@@ -92,6 +91,8 @@ namespace test
 		//LIGHT SOURCE
 		m_LightSource = Shape3D::CreateSphere(90);
 		m_LightSourceShader = std::make_unique<Shader>("res/shaders/Unlit_Color.shader");
+
+		dirLight->direction.y = 1.0f;
 	}
 
 	test::TestScene::~TestScene()
@@ -102,6 +103,7 @@ namespace test
 	void test::TestScene::OnUpdate(float deltaTime)
 	{
 		water.OnUpdate(deltaTime);
+		land.OnUpdate(deltaTime);
 		land.OnUpdate(deltaTime);
 
 		auto& input = Input::GetInstance();
@@ -248,6 +250,9 @@ namespace test
 		ImGui::PushID(1);
 		land.OnGUI();
 
+		ImGui::PushID(2);
+		land2.OnGUI(); 
+
 		ImGui::Separator();
 		if (ImGui::Button(polygoneModeFill ? "Polygon Mode = Fill" : "Polygon Mode = Line"))
 		{
@@ -265,17 +270,17 @@ namespace test
 		ImGui::Text("C - Lock/Unclock Camera");
 		ImGui::Text("K - Polygon Mode");
 		ImGui::Separator();
-
+		m_Camera->OnGUI();
 		ImGui::DragFloat("Camera Speed", &cameraSpeed, 1.0f, 0.0f, 10000.0f);
 		ImGui::DragFloat("Light Distance", &lightDistance, 1.0f, 0.0f, 10000.0f);
 		ImGui::InputFloat3("Light Pos", &m_LightPos[0]);
-		ImGui::DragFloat("ClippingHeight", &clippingPlaneHeight, 0.1f, -100000.0f, 10000.0f);
 		
-		ImGui::PushID(2);
+		ImGui::PushID(3);
 
 		dirLight->OnGUI();
 		ImGui::Separator();
 
+		ImGui::PopID();
 		ImGui::PopID();
 		ImGui::PopID();
 		ImGui::PopID();
@@ -287,6 +292,7 @@ namespace test
 		auto view = m_Camera->GetViewMatrix();
 
 		land.OnRender(renderer, *m_Camera, clippingPlane, shadowMapShader);
+		land2.OnRender(renderer, *m_Camera, clippingPlane, shadowMapShader);
 	}
 	void TestScene::RenderSkybox(Renderer renderer)
 	{
@@ -315,8 +321,9 @@ namespace test
 
 		auto proj = m_Camera->GetProjection();
 		auto view = m_Camera->GetViewMatrix();
-
-		dirLight->shadowTexture->Bind();
+		/*
+		//dirLight->shadowTexture->Bind();
+		land.m_NormalMap->Bind();
 		{
 			auto& object = *m_Plane;
 			auto& shader = *m_TestTextureShader;
@@ -329,7 +336,7 @@ namespace test
 			shader.SetUniformMat4f("u_Projection", proj);
 			renderer.DrawElementTriangles(shader, object.getObjectVAO(), object.getIndexBuffer());
 		}
-		
+		*/
 		//Light Source
 		{
 			auto& object = m_LightSource;

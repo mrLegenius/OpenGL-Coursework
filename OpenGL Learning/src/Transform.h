@@ -12,6 +12,15 @@ public:
 
 	glm::mat4 GetModel();
 
+	glm::vec3 Front()
+	{
+		glm::vec3 front;
+		front.x = cos(glm::radians(eulerAngles.y)) * cos(glm::radians(eulerAngles.x));
+		front.y = sin(glm::radians(eulerAngles.x));
+		front.z = sin(glm::radians(eulerAngles.y)) * cos(glm::radians(eulerAngles.x));
+		return glm::normalize(front);
+	}
+
 	void OnGUI();
 };
 

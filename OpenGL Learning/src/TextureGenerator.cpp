@@ -1,14 +1,18 @@
 #include "TextureGenerator.h"
 #include "glm/gtc/noise.hpp"
 #include <iostream>
-std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureSize, float scale, int octaves, float persistence, float lacunarity, float exp, unsigned long long seed, glm::vec2 offset)
-{
-	srand(seed);
-	GLfloat* data = new GLfloat[textureSize.x * textureSize.y * sizeof(GLfloat)];
 
-	glm::vec2 *octaveOffsets = new glm::vec2[octaves];
+
+std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(PerlinNoiseData data, glm::ivec2 textureSize, unsigned long long seed, glm::vec2 offset)
+{
 	
-	for (int i = 0; i < octaves; i++)
+
+	srand(seed);
+	GLfloat* texData = new GLfloat[textureSize.x * textureSize.y * sizeof(GLfloat)];
+
+	glm::vec2 *octaveOffsets = new glm::vec2[data.octaves];
+	
+	for (int i = 0; i < data.octaves; i++)
 	{
 		float offsetX = rand() % 20000 - 10000;
 		float offsetY = rand() % 20000 - 10000;
@@ -16,8 +20,8 @@ std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureS
 		octaveOffsets[i] = glm::vec2(offsetX, offsetY) + offset;
 	}
 
-	if (scale <= 1)
-		scale = 1.00001f;
+	if (data.scale <= 1)
+		data.scale = 1.00001f;
 
 	float maxNoiseHeight = -99999999.0f;
 	float minNoiseHeight =  99999999.0f;
@@ -31,56 +35,70 @@ std::shared_ptr<Texture> TextureGenerator::GenerateHeightMap(glm::ivec2 textureS
 			float amplitude = 1;
 			float frequency = 1;
 			float noiseHeight = 0;
-
-			for (int i = 0; i < octaves; i++)
+			
+			for (int i = 0; i < data.octaves; i++)
 			{
-				float xCoord = (x - halfWidth) / scale * frequency + octaveOffsets[i].x;
-				float yCoord = (y - halfHeight) / scale * frequency + octaveOffsets[i].y;
+				float xCoord = (x - halfWidth) / data.scale * frequency + octaveOffsets[i].x;
+				float yCoord = (y - halfHeight) / data.scale * frequency + octaveOffsets[i].y;
 
-				//float xCoord = (x / textureSize.x - 0.5) / scale * frequency + octaveOffsets[i].x;
-				//float yCoord = (y / textureSize.y - 0.5) / scale * frequency + octaveOffsets[i].y;
-				//std::cout << "Perlin" << glm::perlin(glm::vec2(xCoord, yCoord)) * 0.5 + 0.5 << std::endl;
-				float perlinValue = glm::perlin(glm::vec2(xCoord, yCoord)) * 0.5 + 0.5;
+				//float xCoord = (x / textureSize.x - 0.5) / data.scale * frequency + octaveOffsets[i].x;
+				//float yCoord = (y / textureSize.y - 0.5) / data.scale * frequency + octaveOffsets[i].y;
+
+
+				float perlinValue = glm::perlin(glm::vec2(xCoord, yCoord));
+				
 				noiseHeight += perlinValue * amplitude;
 				
-				amplitude *= persistence;
-				frequency *= lacunarity;
+				amplitude *= data.persistence;
+				frequency *= data.lacunarity;
 			}
-			//std::cout << "Height before exp " << noiseHeight;
-			noiseHeight = glm::pow(noiseHeight, exp);
-			//std::cout << " Height after exp " << noiseHeight << std::endl;
-
-			if (noiseHeight > maxNoiseHeight)
-				maxNoiseHeight = noiseHeight;
-			else if (noiseHeight < minNoiseHeight)
-				minNoiseHeight = noiseHeight;
 			
+
+			//std::cout << noiseHeight << std::endl;
+			//if (noiseHeight > maxNoiseHeight)
+			//	maxNoiseHeight = noiseHeight;
+			//else if (noiseHeight < minNoiseHeight)
+			//	minNoiseHeight = noiseHeight;
 			
 			unsigned int index = ((int)y * textureSize.x + (int)x) * 4;
-			data[index + 0] = noiseHeight;
-			data[index + 1] = noiseHeight;
-			data[index + 2] = noiseHeight;
-			data[index + 3] = 1.0f;
+			texData[index + 0] = noiseHeight;
+			texData[index + 1] = noiseHeight;
+			texData[index + 2] = noiseHeight;
+			texData[index + 3] = 1.0f;
 		}
+	/*CLAMPING HEIGHT TO 0-1 RANGE*/
 	/*
+	
 	for (float y = 0.0f; y < textureSize.y; y++)
 		for (float x = 0.0f; x < textureSize.x; x++)
 		{
+			float nx = x / textureSize.x - 0.5f;
+			float ny = y / textureSize.y - 0.5f;
+
 			unsigned int index = ((int)y * textureSize.x + (int)x) * 4;
-			float value = 0;
-			if (data[index] != 0)
-				value = (data[index] - minNoiseHeight) / (maxNoiseHeight - minNoiseHeight);
+			float value = (texData[index] - minNoiseHeight) / (maxNoiseHeight - minNoiseHeight);
+			//std::cout << "Height before exp " << value;
 
-			data[index + 0] = value;
-			data[index + 1] = value;
-			data[index + 2] = value;
-			data[index + 3] = 1.0f;
-		}*/
 
-	auto texture = std::make_shared<Texture>(data, textureSize.x, textureSize.y);
+			float distance = glm::sqrt(nx * nx + ny * ny) * glm::sqrt(2.0f);
+
+			
+			//value *= data.islandHeight * glm::pow(data.oceanReachRate - distance, data.islandModifier);
+
+			value = glm::pow(value, data.exp); 
+			//std::cout << " Height after exp " << value << std::endl;
+			//value = (1 + value - distance) / 2;
+			//std::cout << "value after tweaking " << value << std::endl;
+			texData[index + 0] = value;
+			texData[index + 1] = value;
+			texData[index + 2] = value;
+			texData[index + 3] = 1.0f;
+		}
+	*/
+	auto texture = std::make_shared<Texture>(texData, textureSize.x, textureSize.y);
 
 	delete[] octaveOffsets;
-	delete[] data;
+	delete[] texData;
 	return texture;
 }
 std::shared_ptr<Texture> TextureGenerator::ApplyCookie(std::shared_ptr<Texture> texture, std::shared_ptr<Texture> cookie)
@@ -127,13 +145,13 @@ std::shared_ptr<Texture> TextureGenerator::GenerateNormalMapFromTexture(std::sha
 	GLfloat *data = new GLfloat[width * height * sizeof(GLfloat)];
 	texture->GetPixels(pixels);
 
-	for (unsigned w = 0; w < width; ++w)
+	for (unsigned w = 0; w < width; w++)
 	{
-		for (unsigned h = 0; h < height; ++h)
+		for (unsigned h = 0; h < height; h++)
 		{
 			glm::vec3 normal = calcNormal(pixels, width, height, w, h);
 
-			unsigned index = (w * width + h) * 4;
+			unsigned index = (w + h * width) * 4;
 			data[index] = toNormalizedRGB(normal.x);
 			data[index + 1] = toNormalizedRGB(normal.y);
 			data[index + 2] = toNormalizedRGB(normal.z);

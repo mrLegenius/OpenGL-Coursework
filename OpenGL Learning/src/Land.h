@@ -27,6 +27,10 @@ public:
 	float persistence = 0.5f;
 	float lacunarity = 2.0f;
 	float exponent = 1.0f;
+	float islandModifier = 1.0f;
+	float oceanReachRate = 1.0f;
+	float islandHeight = 1.0f;
+
 	glm::vec2 offset;
 
 	int quality = 128;
@@ -70,7 +74,20 @@ public:
 
 	void GenerateLand();
 
-	std::shared_ptr<Shape3D> GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap);
+	
+	/// <summary>
+	/// 1x1 Plane with y from height map
+	/// </summary>
+	/// <param name="resolution"> Number of vertices in row/column </param>
+	/// <returns> Land mesh </returns>
+	std::shared_ptr<Shape3D> GenerateMesh(int resolution, std::shared_ptr<Texture> heightMap, std::shared_ptr<Texture> cookieMap = nullptr);
+	/// <summary>
+	/// Width x Height size of height Map
+	/// </summary>
+	/// <returns> Land mesh </returns>
+	std::shared_ptr<Shape3D> GenerateMesh(std::shared_ptr<Texture> heightMap, std::shared_ptr<Texture> cookieMap = nullptr);
+
+	std::shared_ptr<Shape3D> GenerateMesh(int width, int height);
 
 	void SetCookie(const std::string& path)
 	{
@@ -79,6 +96,6 @@ public:
 	}
 
 
-	float map(float value, float min1, float max1, float min2, float max2);
+	inline float map(float value, float min1, float max1, float min2, float max2);
 };
 
