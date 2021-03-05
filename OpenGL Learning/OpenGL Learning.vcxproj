@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Chunk.cpp" />
     <ClCompile Include="src\HeightMapGenerator.cpp" />
     <ClCompile Include="src\PointLight.cpp" />
     <ClCompile Include="src\Skybox.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="src\TextureGenerator.cpp" />
     <ClCompile Include="src\Transform.cpp" />
     <ClCompile Include="src\WaterSurface.cpp" />
+    <ClCompile Include="src\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Lit_Color.shader" />
@@ -309,6 +311,7 @@
     <None Include="src\vendor\glm\gtx\wrap.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Chunk.h" />
     <ClInclude Include="src\HeightMapGenerator.h" />
     <ClInclude Include="src\PointLight.h" />
     <ClInclude Include="src\Skybox.h" />
@@ -629,6 +632,7 @@
     <ClInclude Include="src\TextureGenerator.h" />
     <ClInclude Include="src\Transform.h" />
     <ClInclude Include="src\WaterSurface.h" />
+    <ClInclude Include="src\Terrain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

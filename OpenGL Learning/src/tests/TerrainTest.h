@@ -22,11 +22,12 @@
 #include "Land.h"
 #include "DirectionalLight.h"
 
-#include "HeightMapGenerator.h"
+
 
 #include "Skybox.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
+#include "Terrain.h"
 namespace test
 {
 	class TerrainTest : public Test
@@ -39,19 +40,14 @@ namespace test
 		void OnRender() override;
 		void OnImGuiRender() override;
 	private:
-		void AddRow(int index);
-		void AddColumn(int index);
 
-		std::shared_ptr<Shape3D> GenerateMesh(noise::utils::NoiseMap& heightMap);
 		float cameraSpeed = 100.0f;
-		int resolution = 256;
+
 		int radius = 3;
 		bool cameraLock = true;
 		bool polygoneModeFill = true;
 
-		std::map<int, std::map<int, std::shared_ptr<Shape3D>>> chunkMap;
-		std::shared_ptr<HeightMapGenerator> heightMapGenerator;
-
+		Terrain terrain;
 
 		std::shared_ptr<Shader> m_Shader;
 		Skybox skybox;
